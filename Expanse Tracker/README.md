@@ -80,6 +80,10 @@ Database operations use parameterized SQL queries rather than building SQL state
 
 ## Screenshot
 
-<img width="511" height="466" alt="image" src="https://github.com/user-attachments/assets/aa84d6d6-6c0e-43c8-aa05-c5bbb5b71690" />
+## Screenshot
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/aa84d6d6-6c0e-43c8-aa05-c5bbb5b71690" width="48%" />
+  <img src="https://github.com/user-attachments/assets/1cf8d2c4-a08e-4fa5-91d9-ab0ab5ff961e" width="48%" />
+</p>
 
