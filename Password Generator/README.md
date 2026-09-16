@@ -11,8 +11,6 @@ A simple desktop password generator built with **Python** and **Tkinter**.
 * Password strength indicator
 * One-click password generation
 * Copy generated passwords to the clipboard
-* Input validation and error handling
-* Uses Python's `secrets` module for secure random generation
 
 ## Tech Stack
 
