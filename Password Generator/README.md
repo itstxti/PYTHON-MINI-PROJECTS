@@ -37,4 +37,5 @@ python password_generator.py
 
 ## Screenshot
 
+<img width="203" height="304" alt="image" src="https://github.com/user-attachments/assets/b91aeba7-7e3c-4e37-abc1-970372ff610a" />
 
