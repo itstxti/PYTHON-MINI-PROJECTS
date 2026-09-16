@@ -17,12 +17,11 @@ A desktop weather application built with **Python** and **Tkinter** that retriev
 
 ## Tech Stack
 
-| Technology     | Purpose                   |
-| -------------- | ------------------------- |
-| Python         | Application logic         |
-| Tkinter        | Graphical user interface  |
-| Requests       | HTTP requests to the APIs |
-| Open-Meteo API | Weather data              |
+
+* Python     
+* Tkinter      
+* Requests     
+* Open-Meteo API 
 
 ## APIs
 
