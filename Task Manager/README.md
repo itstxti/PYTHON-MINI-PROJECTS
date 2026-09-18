@@ -1,6 +1,6 @@
 # Task Manager
 
-A desktop task management application built with Python, Tkinter, and SQLite.
+A desktop task management application built with **Python**, **Tkinter**, and **SQLite**.
 
 ## Features
 
@@ -20,47 +20,39 @@ A desktop task management application built with Python, Tkinter, and SQLite.
 
 ## Tech Stack
 
-Python
-
-Tkinter
-
-SQLite
-
-tkcalendar
+* **Python 3**
+* **Tkinter**
+* **SQLite**
+* **tkcalendar**
 
 ## Getting Started
 
 ### Requirements
 
-Python 3.x
-
-Tkinter
-
-tkcalendar
+* Python 3.x
+* Tkinter
+* tkcalendar
 
 Install tkcalendar:
 
+```bash id="x7j7z5"
 pip install tkcalendar
+```
 
-### Run the application
+### Run
 
 Clone the repository:
 
+```bash id="4q4qv7"
 git clone https://github.com/itstxti/python-mini-projects.git
-
-Navigate to the project:
-
-cd python-mini-projects/to-do-manager
-
-Run the application:
-
-python todo_manager.py
+cd python-mini-projects/task-manager
+python task_manager.py
+```
 
 A SQLite database will be created automatically when the application is first run.
 
 ## Screenshot
 
 <p align="center">
-  <img src="YOUR_SCREENSHOT_URL" width="48%" />
-  <img src="YOUR_SCREENSHOT_URL" width="48%" />
+<img width="50%" alt="image" src="https://github.com/user-attachments/assets/4b4f4d39-7bfc-40d3-8619-b53f4598492a" />
 </p>

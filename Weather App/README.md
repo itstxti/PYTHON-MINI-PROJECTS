@@ -1,6 +1,6 @@
 # Weather App
 
-A desktop weather application built with Python, Tkinter, and the Open-Meteo API.
+A desktop weather application built with **Python**, **Tkinter**, and the **Open-Meteo API**.
 
 ## Features
 
@@ -19,47 +19,38 @@ A desktop weather application built with Python, Tkinter, and the Open-Meteo API
 
 ## Tech Stack
 
-Python
-
-Tkinter
-
-Requests
-
-Open-Meteo API
+* **Python 3**
+* **Tkinter**
+* **Requests**
+* **Open-Meteo API**
 
 ## Getting Started
 
 ### Requirements
 
-Python 3.x
-
-Tkinter
-
-requests
+* Python 3.x
+* Tkinter
+* requests
 
 Install requests:
 
+```bash id="1l9xj4"
 pip install requests
+```
 
-### Run the application
+### Run
 
 Clone the repository:
 
-git clone [https://github.com/itstxti/python-mini-projects.git](https://github.com/itstxti/python-mini-projects.git)
-
-Navigate to the project:
-
+```bash id="4hm7cs"
+git clone https://github.com/itstxti/python-mini-projects.git
 cd python-mini-projects/weather-app
-
-Run the application:
-
 python weather_app.py
+```
 
 ## Screenshot
 
 <p align="center">
-   <img width="48%" alt="image" src="https://github.com/user-attachments/assets/6d94ba6c-49ab-4dbd-999a-c3dd948e8f87" />
-   <img width="48%" alt="image" src="https://github.com/user-attachments/assets/42e06806-2e31-49b3-aef7-3986061faeac" />
+  <img width="48%" alt="Weather App" src="https://github.com/user-attachments/assets/6d94ba6c-49ab-4dbd-999a-c3dd948e8f87" />
+  <img width="48%" alt="Weather App" src="https://github.com/user-attachments/assets/42e06806-2e31-49b3-aef7-3986061faeac" />
 </p>
-
-
