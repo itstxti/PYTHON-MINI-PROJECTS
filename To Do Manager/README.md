@@ -1,4 +1,4 @@
-# To-Do Manager
+# Task Manager
 
 A desktop task management application built with Python, Tkinter, and SQLite.
 
