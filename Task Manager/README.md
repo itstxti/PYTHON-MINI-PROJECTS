@@ -54,5 +54,6 @@ A SQLite database will be created automatically when the application is first ru
 ## Screenshot
 
 <p align="center">
-<img width="50%" alt="image" src="https://github.com/user-attachments/assets/4b4f4d39-7bfc-40d3-8619-b53f4598492a" />
+<img width="50%" alt="image" src="https://github.com/user-attachments/assets/9c808ec2-5b4e-4615-b193-0ad9d853d131" />
+
 </p>
