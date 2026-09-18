@@ -282,6 +282,13 @@ def update_forecast(daily):
     max_temperatures = daily["temperature_2m_max"]
     min_temperatures = daily["temperature_2m_min"]
 
+    # Make all 7 columns share the available width equally
+    for column in range(7):
+        forecast_frame.grid_columnconfigure(
+            column,
+            weight=1
+        )
+
     for index in range(7):
         day_frame = tk.Frame(
             forecast_frame,
@@ -293,7 +300,8 @@ def update_forecast(daily):
         day_frame.grid(
             row=0,
             column=index,
-            padx=2
+            padx=2,
+            sticky="nsew"
         )
 
         day_label = tk.Label(
@@ -422,7 +430,7 @@ search_frame = tk.Frame(
 )
 
 search_frame.pack(
-    pady=5
+    pady=8
 )
 
 
@@ -449,10 +457,9 @@ city_entry.bind(
 search_button = tk.Button(
     search_frame,
     text="Search",
-    font=("Arial", 11, "bold"),
+    font=("Arial", 10, "bold"),
     command=get_weather,
     padx=12,
-    pady=5,
     cursor="hand2"
 )
 
