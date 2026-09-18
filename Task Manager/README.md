@@ -34,7 +34,7 @@ A desktop task management application built with **Python**, **Tkinter**, and **
 * tkcalendar
 
 > [!NOTE]
->Included with most standard Python installations
+>Tkinter is included with most standard Python installations
 
 Install the required dependency:
 
