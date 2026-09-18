@@ -22,7 +22,10 @@ A simple desktop expense tracker built with **Python**, **Tkinter**, and **SQLit
 ### Requirements
 
 * Python 3.x
-* Tkinter *(included with most standard Python installations)*
+* Tkinter
+
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
 ### Run
 
@@ -31,8 +34,6 @@ git clone https://github.com/itstxti/python-mini-projects.git
 cd python-mini-projects/expense-tracker
 python expense_tracker.py
 ```
-
-A SQLite database is created automatically when the application is first run.
 
 ## Screenshot
 
