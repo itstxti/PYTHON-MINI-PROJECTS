@@ -37,8 +37,6 @@ cd python-mini-projects/password-generator
 python password_generator.py
 ```
 
-No external Python packages are required.
-
 ## Screenshot
 
 <p align="center">
