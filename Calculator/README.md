@@ -1,37 +1,45 @@
 # Calculator
 
-A simple desktop calculator built with **Python** and **Tkinter**.
-
-## Features
-
-* Basic arithmetic operations: addition, subtraction, multiplication, and division
-* Decimal numbers
-* Parentheses
-* Clear and backspace buttons
-* Error handling for invalid expressions and division by zero
-* Simple graphical user interface
+A desktop calculator application built with Python and Tkinter.
 
 ## Tech Stack
 
-* **Python**
-* **Tkinter**
+Python
+
+Tkinter
 
 ## Getting Started
 
 ### Requirements
 
-* Python 3.x
+Python 3.x
+
+Tkinter
 
 Tkinter is included with most standard Python installations.
 
 ### Run the application
 
-```bash
+Clone the repository:
+
+git clone https://github.com/itstxti/python-mini-projects.git
+
+Navigate to the project:
+
+cd python-mini-projects/calculator
+
+Run the application:
+
 python calculator.py
-```
+
+The application does not require any external Python packages.
 
 ## Screenshot
 
-<img width="203" height="304" alt="image" src="https://github.com/user-attachments/assets/a1ddedd9-8d88-4b19-95a8-9ed6080f8d93" />
+<p align="center">
+    <img width="203" height="304" alt="image" src="https://github.com/user-attachments/assets/a1ddedd9-8d88-4b19-95a8-9ed6080f8d93" />
+</p>
+
+
 
 
