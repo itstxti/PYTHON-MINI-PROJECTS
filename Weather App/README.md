@@ -51,7 +51,6 @@ python weather_app.py
 ## Screenshot
 
 <p align="center">
-  <img width="48%" alt="Weather App" src="https://github.com/user-attachments/assets/6d94ba6c-49ab-4dbd-999a-c3dd948e8f87" />
-  <img width="48%"  alt="image" src="https://github.com/user-attachments/assets/4dd78e94-df51-4d68-b37e-64cdce5b2caf" />
-
+  <img width="48%" alt="Weather App" src="https://github.com/user-attachments/assets/6cb30815-4a70-4488-8343-90d2182a17b8" />
+  <img width="48%" alt="Weather App" src="https://github.com/user-attachments/assets/4dd78e94-df51-4d68-b37e-64cdce5b2caf" />
 </p>
