@@ -727,18 +727,6 @@ tk.Label(
 )
 
 
-tk.Label(
-    header_frame,
-    text="Organize your tasks and stay on top of your day.",
-    font=("Segoe UI", 10),
-    bg=BG_COLOR,
-    fg=SECONDARY_TEXT
-).pack(
-    anchor="w",
-    pady=(3, 0)
-)
-
-
 # Statistics
 
 stats_frame = tk.Frame(
