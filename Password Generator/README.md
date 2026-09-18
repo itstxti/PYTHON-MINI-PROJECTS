@@ -26,6 +26,9 @@ A desktop password generator built with **Python** and **Tkinter**.
 
 * Python 3.x
 * Tkinter
+  
+> [!NOTE]
+>Included with most standard Python installations
 
 ### Run
 
