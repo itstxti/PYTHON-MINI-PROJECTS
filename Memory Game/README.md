@@ -53,7 +53,7 @@ Complete the board before the time limit runs out.
 * Tkinter
 
 > [!NOTE]
->Included with most standard Python installations
+>Tkinter is included with most standard Python installations
 
 ### Run
 
