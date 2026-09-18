@@ -51,6 +51,8 @@ Complete the board before the time limit runs out.
 
 * Python 3.x
 * Tkinter
+
+> [!NOTE]
 >Included with most standard Python installations
 
 ### Run
