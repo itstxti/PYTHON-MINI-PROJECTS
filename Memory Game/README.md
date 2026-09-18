@@ -43,7 +43,6 @@ Complete the board before the time limit runs out.
 
 * **Python 3**
 * **Tkinter**
-* **JSON**
 
 ## Getting Started
 
