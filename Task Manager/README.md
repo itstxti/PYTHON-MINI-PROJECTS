@@ -33,6 +33,9 @@ A desktop task management application built with **Python**, **Tkinter**, and **
 * Tkinter
 * tkcalendar
 
+> [!NOTE]
+>Included with most standard Python installations
+
 Install the required dependency:
 
 ```bash
