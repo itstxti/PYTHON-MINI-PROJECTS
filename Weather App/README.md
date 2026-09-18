@@ -1,5 +1,3 @@
-Claro. Manteniendo **exactamente el mismo estilo sencillo** que el README de To-Do Manager:
-
 # Weather App
 
 A desktop weather application built with Python, Tkinter, and the Open-Meteo API.
