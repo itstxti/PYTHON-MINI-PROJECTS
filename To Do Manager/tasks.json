@@ -1,0 +1,20 @@
+[
+  {
+    "text": "BOLA",
+    "priority": "Medium",
+    "done": false,
+    "due": "2026-09-15",
+    "tags": "COMIDA, SAL",
+    "recurrence": "None",
+    "id": 1
+  },
+  {
+    "text": "d",
+    "priority": "Medium",
+    "done": false,
+    "due": "2026-09-18",
+    "tags": "",
+    "recurrence": "None",
+    "id": 2
+  }
+]
