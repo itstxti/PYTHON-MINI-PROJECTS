@@ -32,6 +32,9 @@ A desktop weather application built with **Python**, **Tkinter**, and the **Open
 * Tkinter
 * requests
 
+> [!NOTE]
+>Tkinter is included with most standard Python installations
+
 Install the required dependency:
 
 ```bash
