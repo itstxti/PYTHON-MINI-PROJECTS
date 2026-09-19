@@ -27,6 +27,8 @@ python animated-heart.py
 ## Screenshot
 
 <p align="center">
-  <img width="48%"  alt="image" src="https://github.com/user-attachments/assets/73a944dc-674e-4189-81a9-ff750fa49e11" />
-  <img width="48%"  alt="image" src="https://github.com/user-attachments/assets/188bb2da-26ae-4561-a76b-ce865db35449" />
+  <img width="33%" alt="image" src="https://github.com/user-attachments/assets/aa17b90c-136b-4348-9f1f-94671525239a" />
+  <img width="33%" alt="image" src="https://github.com/user-attachments/assets/0db87077-1aa7-4bea-87dc-d3790cb2f439" />
+
+  <img width="33%" alt="image" src="https://github.com/user-attachments/assets/69aaa4d0-5383-4c97-a4a9-a117fb6dad8f" />
 </p>
