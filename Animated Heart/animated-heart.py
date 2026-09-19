@@ -113,10 +113,6 @@ FONT_DIR = os.path.join(
 # ------------------------------------------------------------
 # FONT FAMILIES
 # ------------------------------------------------------------
-# This is the internal family name of the .ttf font.
-#
-# matrix.ttf -> Matrix
-# ------------------------------------------------------------
 
 OUTLINE_FONT_FAMILY = "Matrix"
 FILL_FONT_FAMILY = "Matrix"
@@ -158,6 +154,9 @@ CENTER_FONT_SIZE = 38
 
 MATRIX_FONT_SIZE = 13
 
+# Arial font used only for Matrix glitch characters
+MATRIX_GLITCH_FONT_SIZE = 13
+
 INTRO_TITLE_FONT_SIZE = 48
 INTRO_INFO_FONT_SIZE = 18
 
@@ -174,6 +173,9 @@ FILL_FONT_WEIGHT = "bold"
 CENTER_FONT_WEIGHT = "bold"
 
 MATRIX_FONT_WEIGHT = "bold"
+
+# Arial glitch font
+MATRIX_GLITCH_FONT_WEIGHT = "bold"
 
 INTRO_TITLE_FONT_WEIGHT = "bold"
 INTRO_INFO_FONT_WEIGHT = "normal"
@@ -295,6 +297,9 @@ CENTER_FONT = None
 
 MATRIX_FONT = None
 
+# Arial font used exclusively by glitch characters
+MATRIX_GLITCH_FONT = None
+
 INTRO_TITLE_FONT = None
 INTRO_INFO_FONT = None
 
@@ -326,9 +331,9 @@ MATRIX_CHARACTERS = list(
     "ILOVEYOU"
 )
 
-MATRIX_COLUMN_WIDTH = 100
+MATRIX_COLUMN_WIDTH = 50
 
-MATRIX_ROW_SPACING = 22
+MATRIX_ROW_SPACING = 20
 
 MATRIX_SPEED_MIN = 4
 MATRIX_SPEED_MAX = 10
@@ -339,7 +344,9 @@ MATRIX_GLITCH_MIN_FRAMES = 5
 MATRIX_GLITCH_MAX_FRAMES = 10
 
 MATRIX_GLITCH_CHARACTERS = (
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "!@#$%^&*+-=_<>?/\\|~"
+    "[]{}()"
+    "§±×÷"
 )
 
 
@@ -1030,6 +1037,10 @@ class LoveHeart:
                         MATRIX_GLITCH_MAX_FRAMES
                     )
 
+                # ------------------------------------------------
+                # Determine character and font
+                # ------------------------------------------------
+
                 if (
                     letter_data["glitch_frames"]
                     > 0
@@ -1043,6 +1054,8 @@ class LoveHeart:
 
                     color = "#FF3030"
 
+                    font = MATRIX_GLITCH_FONT
+
                     letter_data[
                         "glitch_frames"
                     ] -= 1
@@ -1054,6 +1067,8 @@ class LoveHeart:
                             "character"
                         ]
                     )
+
+                    font = MATRIX_FONT
 
                     if index == 0:
 
@@ -1085,7 +1100,7 @@ class LoveHeart:
                     char_y,
                     text=character,
                     fill=color,
-                    font=MATRIX_FONT,
+                    font=font,
                     anchor="center",
                     tags="matrix"
                 )
@@ -1955,6 +1970,7 @@ def main():
     global CENTER_FONT
 
     global MATRIX_FONT
+    global MATRIX_GLITCH_FONT
 
     global INTRO_TITLE_FONT
     global INTRO_INFO_FONT
@@ -1988,6 +2004,17 @@ def main():
         MATRIX_FONT_FAMILY,
         MATRIX_FONT_SIZE,
         MATRIX_FONT_WEIGHT
+    )
+
+    # --------------------------------------------------------
+    # Matrix glitch font
+    # Uses Arial directly — no custom font loading required.
+    # --------------------------------------------------------
+
+    MATRIX_GLITCH_FONT = tkfont.Font(
+        family="Arial",
+        size=MATRIX_GLITCH_FONT_SIZE,
+        weight=MATRIX_GLITCH_FONT_WEIGHT
     )
 
     INTRO_TITLE_FONT = load_font(
