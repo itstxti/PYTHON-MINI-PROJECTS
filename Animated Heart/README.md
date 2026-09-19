@@ -1,4 +1,4 @@
-# LOVE
+# Animated Heart
 
 An animated heart built with **Python** and **Tkinter**.
 
