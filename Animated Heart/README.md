@@ -1,4 +1,4 @@
-# LOVE
+# Animated Heart
 
 An animated heart built with **Python** and **Tkinter**.
 
@@ -21,8 +21,8 @@ An animated heart built with **Python** and **Tkinter**.
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/love
-python love.py
+cd python-mini-projects/animated-heart
+python animated-heart.py
 ```
 ## Screenshot
 
