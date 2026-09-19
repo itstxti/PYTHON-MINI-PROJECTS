@@ -3,13 +3,17 @@ import os
 import random
 import time
 import tkinter as tk
+from tkinter import font as tkfont
 import wave
 import winsound
+import ctypes
 
 from dataclasses import dataclass
 
 
+# ============================================================
 # CONFIGURATION
+# ============================================================
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
@@ -42,32 +46,23 @@ MENU_SOUND = os.path.join(
 HEART_START_DELAY = 1000
 
 
+# ============================================================
 # HEART ANIMATION TIMING
+# ============================================================
 # All values are percentages of the audio duration.
-#
-# Example:
-# 0.20 = 20% of the audio
-# 0.50 = 50% of the audio
-# 0.65 = 65% of the audio
-#
-# Change these values to easily control the animation.
 
-# Outline starts immediately and finishes here.
 OUTLINE_END_PERCENT = 0.20
 
-# Fill starts here.
 FILL_START_PERCENT = 0.18
 
-# Fill finishes here.
-# Lower value = faster fill.
 FILL_END_PERCENT = 0.50
 
-# Center "I Love You" starts appearing here.
-# Lower value = appears earlier.
 CENTER_START_PERCENT = 0.40
 
 
+# ============================================================
 # HEART CONFIGURATION
+# ============================================================
 
 SCALE = 20
 
@@ -86,7 +81,9 @@ WORDS = [
 CENTER_TEXT = " I Love You "
 
 
+# ============================================================
 # COLORS
+# ============================================================
 
 COLORS = [
     "#8B0000",
@@ -103,88 +100,252 @@ COLORS = [
 CENTER_COLOR = "#FFF5F5EA"
 
 
+# ============================================================
 # FONTS
+# ============================================================
 
-OUTLINE_FONT = (
-    "Arial",
-    14,
-    "bold"
-)
-
-FILL_FONT = (
-    "Arial",
-    10,
-    "bold"
-)
-
-CENTER_FONT = (
-    "Georgia",
-    38,
-    "bold"
+FONT_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "font"
 )
 
 
+# ------------------------------------------------------------
+# FONT FAMILIES
+# ------------------------------------------------------------
+# This is the internal family name of the .ttf font.
+#
+# matrix.ttf -> Matrix
+# ------------------------------------------------------------
+
+OUTLINE_FONT_FAMILY = "Matrix"
+FILL_FONT_FAMILY = "Matrix"
+CENTER_FONT_FAMILY = "Matrix"
+
+MATRIX_FONT_FAMILY = "Matrix"
+
+INTRO_TITLE_FONT_FAMILY = "Matrix"
+INTRO_INFO_FONT_FAMILY = "Matrix"
+
+TRANSITION_TITLE_FONT_FAMILY = "Matrix"
+TRANSITION_INFO_FONT_FAMILY = "Matrix"
+
+
+# ------------------------------------------------------------
+# FONT FILES
+# ------------------------------------------------------------
+
+OUTLINE_FONT_FILE = "matrix.ttf"
+FILL_FONT_FILE = "matrix.ttf"
+CENTER_FONT_FILE = "matrix.ttf"
+
+MATRIX_FONT_FILE = "matrix.ttf"
+
+INTRO_TITLE_FONT_FILE = "matrix.ttf"
+INTRO_INFO_FONT_FILE = "matrix.ttf"
+
+TRANSITION_TITLE_FONT_FILE = "matrix.ttf"
+TRANSITION_INFO_FONT_FILE = "matrix.ttf"
+
+
+# ------------------------------------------------------------
+# FONT SIZES
+# ------------------------------------------------------------
+
+OUTLINE_FONT_SIZE = 14
+FILL_FONT_SIZE = 10
+CENTER_FONT_SIZE = 38
+
+MATRIX_FONT_SIZE = 13
+
+INTRO_TITLE_FONT_SIZE = 48
+INTRO_INFO_FONT_SIZE = 18
+
+TRANSITION_TITLE_FONT_SIZE = 26
+TRANSITION_INFO_FONT_SIZE = 18
+
+
+# ------------------------------------------------------------
+# FONT WEIGHTS
+# ------------------------------------------------------------
+
+OUTLINE_FONT_WEIGHT = "bold"
+FILL_FONT_WEIGHT = "bold"
+CENTER_FONT_WEIGHT = "bold"
+
+MATRIX_FONT_WEIGHT = "bold"
+
+INTRO_TITLE_FONT_WEIGHT = "bold"
+INTRO_INFO_FONT_WEIGHT = "normal"
+
+TRANSITION_TITLE_FONT_WEIGHT = "bold"
+TRANSITION_INFO_FONT_WEIGHT = "bold"
+
+
+# ============================================================
+# CUSTOM FONT LOADING
+# ============================================================
+
+_registered_fonts = []
+
+
+def register_font(filename):
+
+    path = os.path.join(
+        FONT_DIR,
+        filename
+    )
+
+    if not os.path.exists(path):
+
+        print(
+            f"Font not found: {path}"
+        )
+
+        return False
+
+    try:
+
+        AddFontResourceExW = (
+            ctypes.windll.gdi32.AddFontResourceExW
+        )
+
+        AddFontResourceExW.argtypes = [
+            ctypes.c_wchar_p,
+            ctypes.c_uint,
+            ctypes.c_void_p
+        ]
+
+        AddFontResourceExW.restype = ctypes.c_int
+
+        # FR_PRIVATE:
+        # Makes the font available to this process
+        # without permanently installing it in Windows.
+
+        FR_PRIVATE = 0x10
+
+        result = AddFontResourceExW(
+            path,
+            FR_PRIVATE,
+            0
+        )
+
+        if result == 0:
+
+            print(
+                f"Could not register font: {path}"
+            )
+
+            return False
+
+        _registered_fonts.append(path)
+
+        print(
+            f"Font loaded: {filename}"
+        )
+
+        return True
+
+    except Exception as error:
+
+        print(
+            f"Font loading error: {error}"
+        )
+
+        return False
+
+
+def load_font(
+    filename,
+    family,
+    size,
+    weight="normal"
+):
+
+    loaded = register_font(
+        filename
+    )
+
+    if not loaded:
+
+        print(
+            f"Using Arial fallback for: {filename}"
+        )
+
+        return tkfont.Font(
+            family="Arial",
+            size=size,
+            weight=weight
+        )
+
+    return tkfont.Font(
+        family=family,
+        size=size,
+        weight=weight
+    )
+
+
+# ============================================================
+# FONT VARIABLES
+# ============================================================
+
+OUTLINE_FONT = None
+FILL_FONT = None
+CENTER_FONT = None
+
+MATRIX_FONT = None
+
+INTRO_TITLE_FONT = None
+INTRO_INFO_FONT = None
+
+TRANSITION_TITLE_FONT = None
+TRANSITION_INFO_FONT = None
+
+
+# ============================================================
 # PARTICLE FADE
+# ============================================================
 
 FADE_SPEED_MIN = 14
 FADE_SPEED_RANDOM = 4
 
 
+# ============================================================
 # GLOW
+# ============================================================
 
 GLOW_ENABLED = True
 GLOW_LAYERS = 3
 
 
+# ============================================================
 # MATRIX
-
-# Each column contains exactly:
-#
-# I
-# L
-# O
-# V
-# E
-# Y
-# O
-# U
-#
-# The sequence then repeats vertically.
+# ============================================================
 
 MATRIX_CHARACTERS = list(
     "ILOVEYOU"
 )
 
-# Width between independent columns.
 MATRIX_COLUMN_WIDTH = 100
 
-# Vertical distance between letters.
 MATRIX_ROW_SPACING = 22
 
 MATRIX_SPEED_MIN = 4
 MATRIX_SPEED_MAX = 10
 
-MATRIX_FONT = (
-    "Consolas",
-    13,
-    "bold"
-)
-
-# Chance that an individual letter starts glitching
-# on each frame.
 MATRIX_GLITCH_CHANCE = 0.012
 
-# Duration of an individual glitch.
-MATRIX_GLITCH_MIN_FRAMES = 2
-MATRIX_GLITCH_MAX_FRAMES = 5
+MATRIX_GLITCH_MIN_FRAMES = 5
+MATRIX_GLITCH_MAX_FRAMES = 10
 
-# Characters that can temporarily replace a letter.
 MATRIX_GLITCH_CHARACTERS = (
-    "01<>[]{}\\/|#@$%&*+=?"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 
+# ============================================================
 # HEART MATRIX
+# ============================================================
 
 HEART_MATRIX_SPEED_MIN = 3
 HEART_MATRIX_SPEED_MAX = 8
@@ -193,7 +354,9 @@ HEART_MATRIX_DENSITY = 1.0
 HEART_MATRIX_OPACITY = 0.55
 
 
+# ============================================================
 # PARTICLE
+# ============================================================
 
 @dataclass
 class Particle:
@@ -222,7 +385,9 @@ class Particle:
             self.canvas_ids = []
 
 
+# ============================================================
 # AUDIO
+# ============================================================
 
 def get_wav_duration(path):
 
@@ -249,9 +414,13 @@ def play_sound(path, loop=False):
 
     try:
 
-        flags = winsound.SND_FILENAME | winsound.SND_ASYNC
+        flags = (
+            winsound.SND_FILENAME
+            | winsound.SND_ASYNC
+        )
 
         if loop:
+
             flags |= winsound.SND_LOOP
 
         winsound.PlaySound(
@@ -267,7 +436,9 @@ def play_sound(path, loop=False):
         )
 
 
+# ============================================================
 # HEART EQUATION
+# ============================================================
 
 def heart_function(x, y):
 
@@ -294,7 +465,9 @@ def heart_point(t):
     return x, y
 
 
+# ============================================================
 # BUILD OUTLINE PARTICLES
+# ============================================================
 
 def build_outline_particles(
     count,
@@ -362,7 +535,9 @@ def build_outline_particles(
 
             break
 
-    random.shuffle(selected)
+    random.shuffle(
+        selected
+    )
 
     particles = []
 
@@ -412,27 +587,33 @@ def build_outline_particles(
     return particles
 
 
+# ============================================================
 # BUILD FILL PARTICLES
+# ============================================================
 
-def build_fill_particles(count, min_gap, center_x, center_y):
+def build_fill_particles(
+    count,
+    min_gap,
+    center_x,
+    center_y
+):
 
     selected = []
 
     attempts = 0
     max_attempts = count * 300
 
-    # Heart dimensions
     HEART_WIDTH = 16
     HEART_HEIGHT = 13
 
-    # Keep the filler slightly inside the outline
     INNER_SCALE = 0.88
 
-    while len(selected) < count and attempts < max_attempts:
+    while (
+        len(selected) < count
+        and attempts < max_attempts
+    ):
 
         attempts += 1
-
-        # Generate a random point inside the heart's bounding box
 
         x = random.uniform(
             -HEART_WIDTH * INNER_SCALE,
@@ -444,20 +625,23 @@ def build_fill_particles(count, min_gap, center_x, center_y):
             HEART_HEIGHT * INNER_SCALE
         )
 
-        # Convert the point to screen coordinates
+        screen_x = (
+            center_x
+            + x * SCALE
+        )
 
-        screen_x = center_x + x * SCALE
-        screen_y = center_y - y * SCALE
+        screen_y = (
+            center_y
+            - y * SCALE
+        )
 
-        # Check whether the point is inside the same heart shape
-        # used by the outline.
+        normalized_x = (
+            x / INNER_SCALE
+        )
 
-        # Convert to normalized heart coordinates
-
-        normalized_x = x / INNER_SCALE
-        normalized_y = y / INNER_SCALE
-
-        # Find the closest point on the parametric heart.
+        normalized_y = (
+            y / INNER_SCALE
+        )
 
         inside = False
 
@@ -474,10 +658,9 @@ def build_fill_particles(count, min_gap, center_x, center_y):
                 / samples
             )
 
-            current_x, current_y = heart_point(t)
-
-            # Check whether the horizontal ray from the point
-            # crosses the heart boundary.
+            current_x, current_y = (
+                heart_point(t)
+            )
 
             if (
                 (previous_y > normalized_y)
@@ -487,10 +670,19 @@ def build_fill_particles(count, min_gap, center_x, center_y):
                 intersection_x = (
                     previous_x
                     + (
-                        (normalized_y - previous_y)
-                        / (current_y - previous_y)
+                        (
+                            normalized_y
+                            - previous_y
+                        )
+                        / (
+                            current_y
+                            - previous_y
+                        )
                     )
-                    * (current_x - previous_x)
+                    * (
+                        current_x
+                        - previous_x
+                    )
                 )
 
                 if normalized_x < intersection_x:
@@ -503,8 +695,6 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         if not inside:
 
             continue
-
-        # Keep particles separated
 
         valid = True
 
@@ -537,8 +727,15 @@ def build_fill_particles(count, min_gap, center_x, center_y):
 
     for index, (x, y) in enumerate(selected):
 
-        screen_x = center_x + x * SCALE
-        screen_y = center_y - y * SCALE
+        screen_x = (
+            center_x
+            + x * SCALE
+        )
+
+        screen_y = (
+            center_y
+            - y * SCALE
+        )
 
         particles.append(
             Particle(
@@ -558,7 +755,9 @@ def build_fill_particles(count, min_gap, center_x, center_y):
     return particles
 
 
+# ============================================================
 # LOVE HEART APPLICATION
+# ============================================================
 
 class LoveHeart:
 
@@ -610,8 +809,6 @@ class LoveHeart:
             expand=True
         )
 
-        # State
-
         self.state = "intro"
 
         self.starting = False
@@ -626,21 +823,14 @@ class LoveHeart:
 
         self.center_start = 0
 
-        # Audio synchronization
-
         self.audio_duration = 5.0
 
         self.animation_end_frame = 1
 
         self.audio_start_time = None
 
-        # Heart center
-
         self.heart_center_x = 0
-
         self.heart_center_y = 0
-
-        # Matrix
 
         self.heart_matrix_columns = []
 
@@ -661,7 +851,9 @@ class LoveHeart:
             loop=True
         )
 
+    # ========================================================
     # KEY HANDLER
+    # ========================================================
 
     def handle_key(self, event):
 
@@ -675,14 +867,10 @@ class LoveHeart:
 
         self.starting = True
 
-        # Stop menu music
-
         winsound.PlaySound(
             None,
             0
         )
-
-        # Play enter sound
 
         play_sound(
             KEY_SOUND
@@ -690,7 +878,9 @@ class LoveHeart:
 
         self.show_transition()
 
+    # ========================================================
     # MATRIX COLUMNS
+    # ========================================================
 
     def create_matrix_columns(
         self,
@@ -718,13 +908,7 @@ class LoveHeart:
 
         columns = []
 
-        for index in range(
-            column_count
-        ):
-
-            # Every column has exactly the same
-            # I -> L -> O -> V -> E -> Y -> O -> U
-            # sequence.
+        for index in range(column_count):
 
             letters = []
 
@@ -768,7 +952,9 @@ class LoveHeart:
 
         return columns
 
+    # ========================================================
     # MATRIX
+    # ========================================================
 
     def draw_matrix(
         self,
@@ -807,10 +993,6 @@ class LoveHeart:
 
             letters = column["letters"]
 
-            # ------------------------------------------------
-            # Draw exactly the 8 letters of ILOVEYOU
-            # ------------------------------------------------
-
             for index, letter_data in enumerate(
                 letters
             ):
@@ -828,10 +1010,6 @@ class LoveHeart:
                 ):
 
                     continue
-
-                # ------------------------------------------------
-                # Occasionally corrupt ONE individual letter
-                # ------------------------------------------------
 
                 if (
                     letter_data["glitch_frames"] <= 0
@@ -852,10 +1030,6 @@ class LoveHeart:
                         MATRIX_GLITCH_MAX_FRAMES
                     )
 
-                # ------------------------------------------------
-                # Normal letter or corrupted letter
-                # ------------------------------------------------
-
                 if (
                     letter_data["glitch_frames"]
                     > 0
@@ -866,8 +1040,6 @@ class LoveHeart:
                             "glitch_character"
                         ]
                     )
-
-                    # Glitched character is brighter.
 
                     color = "#FF3030"
 
@@ -883,15 +1055,11 @@ class LoveHeart:
                         ]
                     )
 
-                    # Head of the sequence is brighter.
-
                     if index == 0:
 
                         color = "#D81010"
 
                     else:
-
-                        # Gradual fade down the sequence.
 
                         fade_colors = [
                             "#C41010",
@@ -922,14 +1090,7 @@ class LoveHeart:
                     tags="matrix"
                 )
 
-            # ------------------------------------------------
-            # Move entire sequence down
-            # ------------------------------------------------
-
             column["y"] += speed
-
-            # Once the complete sequence has left
-            # the screen, restart it above the screen.
 
             sequence_height = (
                 len(MATRIX_CHARACTERS)
@@ -960,8 +1121,6 @@ class LoveHeart:
                     else MATRIX_SPEED_MAX
                 )
 
-                # Reset all glitches.
-
                 for letter_data in column["letters"]:
 
                     letter_data[
@@ -972,7 +1131,9 @@ class LoveHeart:
                         "glitch_frames"
                     ] = 0
 
+    # ========================================================
     # INTRO MATRIX
+    # ========================================================
 
     def animate_matrix(self):
 
@@ -991,7 +1152,9 @@ class LoveHeart:
             self.animate_matrix
         )
 
+    # ========================================================
     # INTRO SCREEN
+    # ========================================================
 
     def draw_intro(self):
 
@@ -1021,17 +1184,36 @@ class LoveHeart:
             / 2
         )
 
+        # LOVE
+        self.canvas.create_text(
+            center_x - 10,
+            center_y - 80,
+            text="LOVE",
+            fill="#FF0000",
+            font=INTRO_TITLE_FONT,
+            anchor="e",
+            tags="intro_text"
+        )
+
+        # .
         self.canvas.create_text(
             center_x,
-            center_y - 80,
-            text="LOVE.EXE",
+            center_y - 85,
+            text=".",
             fill="#FF0000",
-            font=(
-                "Consolas",
-                48,
-                "bold"
-            ),
-            anchor="center",
+            font=("Arial", 48, "bold"),
+            anchor="w",
+            tags="intro_text"
+        )
+
+        # EXE
+        self.canvas.create_text(
+            center_x + 25,
+            center_y - 80,
+            text="EXE",
+            fill="#FF0000",
+            font=INTRO_TITLE_FONT,
+            anchor="w",
             tags="intro_text"
         )
 
@@ -1040,10 +1222,7 @@ class LoveHeart:
             center_y,
             text="[ SYSTEM READY ]",
             fill="#FFFFFF",
-            font=(
-                "Consolas",
-                18
-            ),
+            font=INTRO_INFO_FONT,
             anchor="center",
             tags="intro_text"
         )
@@ -1053,16 +1232,14 @@ class LoveHeart:
             center_y + 70,
             text="[ PRESS ANY KEY ]",
             fill="#FF3333",
-            font=(
-                "Consolas",
-                18,
-                "bold"
-            ),
+            font=INTRO_INFO_FONT,
             anchor="center",
             tags="intro_text"
         )
 
+    # ========================================================
     # TRANSITION SCREEN
+    # ========================================================
 
     def show_transition(self):
 
@@ -1091,11 +1268,7 @@ class LoveHeart:
             center_y - 120,
             text="CONNECTION ESTABLISHED",
             fill="#FF0000",
-            font=(
-                "Consolas",
-                26,
-                "bold"
-            ),
+            font=TRANSITION_TITLE_FONT,
             anchor="center"
         )
 
@@ -1104,11 +1277,7 @@ class LoveHeart:
             center_y - 40,
             text="> ACCESS GRANTED",
             fill="#FF3333",
-            font=(
-                "Consolas",
-                18,
-                "bold"
-            ),
+            font=TRANSITION_INFO_FONT,
             anchor="center"
         )
 
@@ -1117,11 +1286,7 @@ class LoveHeart:
             center_y + 10,
             text="> INITIALIZING...",
             fill="#FF3333",
-            font=(
-                "Consolas",
-                18,
-                "bold"
-            ),
+            font=TRANSITION_INFO_FONT,
             anchor="center"
         )
 
@@ -1130,15 +1295,9 @@ class LoveHeart:
             center_y + 60,
             text="> PLEASE WAIT...",
             fill="#FF3333",
-            font=(
-                "Consolas",
-                18,
-                "bold"
-            ),
+            font=TRANSITION_INFO_FONT,
             anchor="center"
         )
-
-        # Static progress bar
 
         bar_width = 420
 
@@ -1177,7 +1336,9 @@ class LoveHeart:
             self.start_animation
         )
 
+    # ========================================================
     # START HEART ANIMATION
+    # ========================================================
 
     def start_animation(self):
 
@@ -1194,8 +1355,6 @@ class LoveHeart:
         self.running = True
 
         self.previous_center = None
-
-        # Get actual canvas dimensions
 
         canvas_width = self.canvas.winfo_width()
 
@@ -1217,8 +1376,6 @@ class LoveHeart:
             canvas_height / 2
         )
 
-        # Read exact WAV duration
-
         self.audio_duration = (
             get_wav_duration(
                 LOVE_SOUND
@@ -1233,8 +1390,6 @@ class LoveHeart:
             )
         )
 
-        # Matrix
-
         self.heart_matrix_columns = (
             self.create_matrix_columns(
                 heart_mode=True
@@ -1242,8 +1397,6 @@ class LoveHeart:
         )
 
         self.animate_heart_matrix()
-
-        # Build heart
 
         self.outline = (
             build_outline_particles(
@@ -1263,13 +1416,9 @@ class LoveHeart:
             )
         )
 
-        # AUDIO-SYNCHRONIZED TIMING
-
         total_frames = (
             self.animation_end_frame
         )
-
-        # OUTLINE
 
         outline_span = (
             max(
@@ -1300,8 +1449,6 @@ class LoveHeart:
                 particle.order
                 * self.frames_per_step
             )
-
-        # FILL
 
         self.fill_start_frame = int(
             total_frames
@@ -1347,21 +1494,15 @@ class LoveHeart:
                 )
             )
 
-        # CENTER TEXT
-
         self.center_start = int(
             total_frames
             * CENTER_START_PERCENT
         )
 
-        # All particles
-
         self.particles = (
             self.outline
             + self.fill
         )
-
-        # Start audio
 
         self.audio_start_time = (
             time.perf_counter()
@@ -1373,7 +1514,9 @@ class LoveHeart:
 
         self.animate()
 
+    # ========================================================
     # HEART MATRIX
+    # ========================================================
 
     def animate_heart_matrix(self):
 
@@ -1390,7 +1533,9 @@ class LoveHeart:
             self.animate_heart_matrix
         )
 
+    # ========================================================
     # CREATE PARTICLE
+    # ========================================================
 
     def create_particle(
         self,
@@ -1408,14 +1553,13 @@ class LoveHeart:
             ):
 
                 size = (
-                    particle.font[1]
+                    particle.font.cget("size")
                     + layer * 4
                 )
 
-                glow_font = (
-                    particle.font[0],
-                    size,
-                    particle.font[2]
+                glow_font = tkfont.Font(
+                    font=particle.font,
+                    size=size
                 )
 
                 if layer == 3:
@@ -1460,7 +1604,9 @@ class LoveHeart:
             text_id
         )
 
+    # ========================================================
     # PARTICLE ALPHA
+    # ========================================================
 
     def set_particle_alpha(
         self,
@@ -1558,7 +1704,9 @@ class LoveHeart:
             fill=color
         )
 
+    # ========================================================
     # CENTER TEXT
+    # ========================================================
 
     def draw_center_text(self):
 
@@ -1587,15 +1735,8 @@ class LoveHeart:
             )
         )
 
-        # Fixed size.
-        # No heartbeat.
-
-        size = CENTER_FONT[1]
-
-        font = (
-            CENTER_FONT[0],
-            size,
-            CENTER_FONT[2]
+        size = CENTER_FONT.cget(
+            "size"
         )
 
         if self.previous_center:
@@ -1604,18 +1745,17 @@ class LoveHeart:
                 self.previous_center
             )
 
-        # Glow
+        glow_font = tkfont.Font(
+            font=CENTER_FONT,
+            size=size + 14
+        )
 
         glow_id = (
             self.canvas.create_text(
                 self.heart_center_x,
                 self.heart_center_y,
                 text=CENTER_TEXT,
-                font=(
-                    CENTER_FONT[0],
-                    size + 14,
-                    CENTER_FONT[2]
-                ),
+                font=glow_font,
                 fill="#440000",
                 anchor="center"
             )
@@ -1649,7 +1789,7 @@ class LoveHeart:
                 self.heart_center_x,
                 self.heart_center_y,
                 text=CENTER_TEXT,
-                font=font,
+                font=CENTER_FONT,
                 fill=color,
                 anchor="center"
             )
@@ -1664,7 +1804,9 @@ class LoveHeart:
             center_id
         )
 
+    # ========================================================
     # ANIMATE
+    # ========================================================
 
     def animate(self):
 
@@ -1673,8 +1815,6 @@ class LoveHeart:
             return
 
         self.frame += 1
-
-        # Particles
 
         for particle in self.particles:
 
@@ -1728,11 +1868,7 @@ class LoveHeart:
                     alpha
                 )
 
-        # Center text
-
         self.draw_center_text()
-
-        # End with audio
 
         if self.animation_finished():
 
@@ -1747,7 +1883,9 @@ class LoveHeart:
             self.animate
         )
 
+    # ========================================================
     # FINISH CHECK
+    # ========================================================
 
     def animation_finished(self):
 
@@ -1768,7 +1906,9 @@ class LoveHeart:
             >= self.animation_end_frame
         )
 
+    # ========================================================
     # FINISHED
+    # ========================================================
 
     def show_finished(self):
 
@@ -1776,7 +1916,9 @@ class LoveHeart:
 
         self.root.destroy()
 
+    # ========================================================
     # CLOSE
+    # ========================================================
 
     def close(self, event=None):
 
@@ -1796,11 +1938,85 @@ class LoveHeart:
         self.root.destroy()
 
 
+# ============================================================
 # MAIN
+# ============================================================
 
 def main():
 
     root = tk.Tk()
+
+    # --------------------------------------------------------
+    # Load fonts
+    # --------------------------------------------------------
+
+    global OUTLINE_FONT
+    global FILL_FONT
+    global CENTER_FONT
+
+    global MATRIX_FONT
+
+    global INTRO_TITLE_FONT
+    global INTRO_INFO_FONT
+
+    global TRANSITION_TITLE_FONT
+    global TRANSITION_INFO_FONT
+
+    OUTLINE_FONT = load_font(
+        OUTLINE_FONT_FILE,
+        OUTLINE_FONT_FAMILY,
+        OUTLINE_FONT_SIZE,
+        OUTLINE_FONT_WEIGHT
+    )
+
+    FILL_FONT = load_font(
+        FILL_FONT_FILE,
+        FILL_FONT_FAMILY,
+        FILL_FONT_SIZE,
+        FILL_FONT_WEIGHT
+    )
+
+    CENTER_FONT = load_font(
+        CENTER_FONT_FILE,
+        CENTER_FONT_FAMILY,
+        CENTER_FONT_SIZE,
+        CENTER_FONT_WEIGHT
+    )
+
+    MATRIX_FONT = load_font(
+        MATRIX_FONT_FILE,
+        MATRIX_FONT_FAMILY,
+        MATRIX_FONT_SIZE,
+        MATRIX_FONT_WEIGHT
+    )
+
+    INTRO_TITLE_FONT = load_font(
+        INTRO_TITLE_FONT_FILE,
+        INTRO_TITLE_FONT_FAMILY,
+        INTRO_TITLE_FONT_SIZE,
+        INTRO_TITLE_FONT_WEIGHT
+    )
+
+    INTRO_INFO_FONT = load_font(
+        INTRO_INFO_FONT_FILE,
+        INTRO_INFO_FONT_FAMILY,
+        INTRO_INFO_FONT_SIZE,
+        INTRO_INFO_FONT_WEIGHT
+    )
+
+    TRANSITION_TITLE_FONT = load_font(
+        TRANSITION_TITLE_FONT_FILE,
+        TRANSITION_TITLE_FONT_FAMILY,
+        TRANSITION_TITLE_FONT_SIZE,
+        TRANSITION_TITLE_FONT_WEIGHT
+    )
+
+    TRANSITION_INFO_FONT = load_font(
+        TRANSITION_INFO_FONT_FILE,
+        TRANSITION_INFO_FONT_FAMILY,
+        TRANSITION_INFO_FONT_SIZE,
+        TRANSITION_INFO_FONT_WEIGHT
+    )
 
     LoveHeart(
         root
