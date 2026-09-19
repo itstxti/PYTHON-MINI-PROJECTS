@@ -1274,7 +1274,7 @@ class LoveHeart:
         self.canvas.create_text(
             center_x,
             center_y + 10,
-            text="> INITIALIZING...",
+            text="> INITIALIZING",
             fill="#FF3333",
             font=TRANSITION_INFO_FONT,
             anchor="center"
@@ -1283,7 +1283,7 @@ class LoveHeart:
         self.canvas.create_text(
             center_x,
             center_y + 60,
-            text="> PLEASE WAIT...",
+            text="> PLEASE WAIT",
             fill="#FF3333",
             font=TRANSITION_INFO_FONT,
             anchor="center"
