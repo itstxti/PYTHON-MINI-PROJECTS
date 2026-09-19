@@ -32,17 +32,19 @@ A desktop weather application built with **Python**, **Tkinter**, and the **Open
 * Tkinter
 * requests
 
-Install requests:
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
-```bash id="1l9xj4"
-pip install requests
+Install the required dependency:
+
+```bash
+pip install -r requirements.txt
+Run
 ```
-
-### Run
 
 Clone the repository:
 
-```bash id="4hm7cs"
+```
 git clone https://github.com/itstxti/python-mini-projects.git
 cd python-mini-projects/weather-app
 python weather_app.py

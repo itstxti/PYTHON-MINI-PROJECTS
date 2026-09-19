@@ -33,10 +33,13 @@ A desktop task management application built with **Python**, **Tkinter**, and **
 * Tkinter
 * tkcalendar
 
-Install tkcalendar:
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
-```bash id="x7j7z5"
-pip install tkcalendar
+Install the required dependency:
+
+```bash
+pip install -r requirements.txt
 ```
 
 ### Run

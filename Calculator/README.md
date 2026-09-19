@@ -12,7 +12,10 @@ A simple desktop calculator built with **Python** and **Tkinter**.
 ### Requirements
 
 * Python 3.x
-* Tkinter *(included with most standard Python installations)*
+* Tkinter
+
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
 ### Run
 
@@ -21,8 +24,6 @@ git clone https://github.com/itstxti/python-mini-projects.git
 cd python-mini-projects/calculator
 python calculator.py
 ```
-
-No external Python packages are required.
 
 ## Screenshot
 

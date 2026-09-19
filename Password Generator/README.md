@@ -26,8 +26,9 @@ A desktop password generator built with **Python** and **Tkinter**.
 
 * Python 3.x
 * Tkinter
-
-> Tkinter is included with most standard Python installations.
+  
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
 ### Run
 
@@ -36,8 +37,6 @@ git clone https://github.com/itstxti/python-mini-projects.git
 cd python-mini-projects/password-generator
 python password_generator.py
 ```
-
-No external Python packages are required.
 
 ## Screenshot
 

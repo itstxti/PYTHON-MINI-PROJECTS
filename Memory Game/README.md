@@ -23,16 +23,6 @@ A desktop memory card game built with **Python** and **Tkinter**.
 | Medium     | 4×6   |     90 seconds |
 | Hard       | 6×6   |    120 seconds |
 
-## Symbol Categories
-
-Each game randomly selects one of the following categories:
-
-* Animals
-* Food
-* Nature
-* Space
-* Objects
-
 ## Game Modes
 
 ### Solo
@@ -45,26 +35,24 @@ Play locally with another player on the same computer.
 
 Players take turns selecting two cards. If the cards match, the same player continues their turn. If they do not match, the turn passes to the other player.
 
-Each player's attempts and completion time are tracked separately.
-
 ### Time Challenge
 
 Complete the board before the time limit runs out.
-
-Scores are ranked by completion time and then by number of attempts.
 
 ## Tech Stack
 
 * **Python 3**
 * **Tkinter**
-* **JSON**
 
 ## Getting Started
 
 ### Requirements
 
 * Python 3.x
-* Tkinter *(included with most standard Python installations)*
+* Tkinter
+
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
 ### Run
 

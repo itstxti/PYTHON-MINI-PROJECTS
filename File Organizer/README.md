@@ -26,7 +26,10 @@ A simple desktop file organizer built with **Python** and **Tkinter**.
 ### Requirements
 
 * Python 3.x
-* Tkinter *(included with most standard Python installations)*
+* Tkinter
+
+> [!NOTE]
+>Tkinter is included with most standard Python installations
 
 ### Run
 
