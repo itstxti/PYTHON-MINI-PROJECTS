@@ -70,7 +70,6 @@ SYMBOL_SETS = {
 
 
 # Score Board
-
 class ScoreBoard:
     def __init__(self):
         self.scores = {
@@ -229,7 +228,6 @@ class ScoreBoard:
 
 
 # Memory Game
-
 class MemoryGame:
     def __init__(self, root):
         self.root = root
@@ -290,11 +288,7 @@ class MemoryGame:
         self.timer_job = None
 
         self.show_main_menu()
-
-    # ========================================================
     # General UI
-    # ========================================================
-
     def clear_screen(self):
         self.stop_timer()
 
@@ -325,11 +319,7 @@ class MemoryGame:
             padx=10,
             pady=10
         )
-
-    # ========================================================
     # Main Menu
-    # ========================================================
-
     def show_main_menu(self):
         self.stop_timer()
 
@@ -388,11 +378,7 @@ class MemoryGame:
             width=22
         )
         exit_button.pack(pady=8)
-
-    # ========================================================
     # Difficulty Menu
-    # ========================================================
-
     def show_difficulty_menu(self):
         self.clear_screen()
 
@@ -443,11 +429,7 @@ class MemoryGame:
     def select_difficulty(self, difficulty):
         self.current_difficulty = difficulty
         self.show_mode_menu()
-
-    # ========================================================
     # Mode Menu
-    # ========================================================
-
     def show_mode_menu(self):
         self.clear_screen()
 
@@ -509,11 +491,7 @@ class MemoryGame:
             width=22
         )
         back_button.pack(pady=(25, 7))
-
-    # ========================================================
     # Start Game
-    # ========================================================
-
     def start_game(self, mode):
         self.current_mode = mode
 
@@ -563,11 +541,7 @@ class MemoryGame:
         ]
 
         self.show_game_screen()
-
-    # ========================================================
     # Game Screen
-    # ========================================================
-
     def show_game_screen(self):
         self.clear_screen()
 
@@ -603,9 +577,7 @@ class MemoryGame:
             expand=True
         )
 
-        # ----------------------------------------------------
         # Header
-        # ----------------------------------------------------
 
         header_frame = tk.Frame(
             game_frame,
@@ -644,6 +616,7 @@ class MemoryGame:
         )
 
         # Centered title
+
         title_frame = tk.Frame(
             header_frame,
             bg=self.bg_color
@@ -685,9 +658,7 @@ class MemoryGame:
             pady=(2, 0)
         )
 
-        # ----------------------------------------------------
         # Game information
-        # ----------------------------------------------------
 
         info_frame = tk.Frame(
             game_frame,
@@ -768,9 +739,7 @@ class MemoryGame:
                 pady=(2, 0)
             )
 
-        # ----------------------------------------------------
         # Board
-        # ----------------------------------------------------
 
         board_container = tk.Frame(
             game_frame,
@@ -806,9 +775,7 @@ class MemoryGame:
         elif self.current_mode == "solo":
             self.update_solo_timer()
 
-    # ========================================================
     # Board Creation
-    # ========================================================
 
     def create_board(self):
         settings = DIFFICULTIES[
@@ -857,6 +824,7 @@ class MemoryGame:
         ) / rows
 
         # Keep cards square
+
         card_size = min(
             card_width,
             card_height
@@ -945,9 +913,7 @@ class MemoryGame:
                     self.click_card(i)
             )
 
-    # ========================================================
     # Card Interaction
-    # ========================================================
 
     def click_card(self, index):
         if self.game_finished:
@@ -1014,9 +980,7 @@ class MemoryGame:
                     second
                 )
 
-    # ========================================================
     # Match
-    # ========================================================
 
     def handle_match(self, first, second):
         self.matched_cards.add(first)
@@ -1040,9 +1004,7 @@ class MemoryGame:
         if len(self.matched_cards) == len(self.board):
             self.finish_game()
 
-    # ========================================================
     # Hide Mismatched Pair
-    # ========================================================
 
     def hide_pair(self, first, second):
         if self.game_finished:
@@ -1071,12 +1033,11 @@ class MemoryGame:
         self.showing_cards = []
 
         # Switch player only in Two Players mode
+
         if self.current_mode == "vs":
             self.switch_player()
 
-    # ========================================================
     # Two Player Turn
-    # ========================================================
 
     def switch_player(self):
         now = time.time()
@@ -1094,9 +1055,7 @@ class MemoryGame:
 
         self.update_game_info()
 
-    # ========================================================
     # Game Information
-    # ========================================================
 
     def update_game_info(self):
         if self.game_finished:
@@ -1139,9 +1098,7 @@ class MemoryGame:
                 text=f"Time: {elapsed:.2f}s"
             )
 
-    # ========================================================
     # Solo Timer
-    # ========================================================
 
     def update_solo_timer(self):
         if self.game_finished:
@@ -1164,9 +1121,7 @@ class MemoryGame:
             self.update_solo_timer
         )
 
-    # ========================================================
     # Challenge Timer
-    # ========================================================
 
     def update_challenge_timer(self):
         if self.game_finished:
@@ -1205,9 +1160,7 @@ class MemoryGame:
             self.update_challenge_timer
         )
 
-    # ========================================================
     # Stop Timer
-    # ========================================================
 
     def stop_timer(self):
         if self.timer_job is not None:
@@ -1225,9 +1178,7 @@ class MemoryGame:
 
             self.timer_job = None
 
-    # ========================================================
     # Time Expired
-    # ========================================================
 
     def time_expired(self):
         if self.game_finished:
@@ -1314,9 +1265,7 @@ class MemoryGame:
             pady=8
         )
 
-    # ========================================================
     # Finish Game
-    # ========================================================
 
     def finish_game(self):
         if self.game_finished:
@@ -1355,9 +1304,7 @@ class MemoryGame:
                 total_time
             )
 
-    # ========================================================
     # Solo Result
-    # ========================================================
 
     def show_solo_result(self, total_time):
         name = simpledialog.askstring(
@@ -1390,9 +1337,7 @@ class MemoryGame:
             ]
         )
 
-    # ========================================================
     # Two Player Result
-    # ========================================================
 
     def show_vs_result(self):
         player1 = self.players[0]
@@ -1462,9 +1407,7 @@ class MemoryGame:
             ]
         )
 
-    # ========================================================
     # Challenge Result
-    # ========================================================
 
     def show_challenge_result(self, total_time):
         name = simpledialog.askstring(
@@ -1497,9 +1440,7 @@ class MemoryGame:
             ]
         )
 
-    # ========================================================
     # Result Screen
-    # ========================================================
 
     def show_result_screen(
         self,
@@ -1596,18 +1537,14 @@ class MemoryGame:
             pady=5
         )
 
-    # ========================================================
     # Restart
-    # ========================================================
 
     def restart_game(self):
         self.start_game(
             self.current_mode
         )
 
-    # ========================================================
     # Top Scores - Difficulty Selection
-    # ========================================================
 
     def show_difficulty_scores(self):
         self.clear_screen()
@@ -1668,9 +1605,7 @@ class MemoryGame:
             pady=(25, 7)
         )
 
-    # ========================================================
     # Top Scores
-    # ========================================================
 
     def show_top_scores(self, difficulty):
         self.clear_screen()
@@ -1768,9 +1703,7 @@ class MemoryGame:
             padx=5
         )
 
-    # ========================================================
     # Score Card
-    # ========================================================
 
     def create_score_card(
             self,
@@ -1793,8 +1726,7 @@ class MemoryGame:
             padx=5,
             pady=5
         )
-
-        # Prevent the card from resizing to its contents
+        
         card.pack_propagate(False)
 
         title_label = tk.Label(
