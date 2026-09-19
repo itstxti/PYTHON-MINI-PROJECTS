@@ -1,0 +1,1616 @@
+import math
+import os
+import random
+import time
+import tkinter as tk
+import wave
+import winsound
+
+from dataclasses import dataclass
+
+
+# CONFIGURATION
+
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 800
+
+BACKGROUND_COLOR = "#000000"
+
+FPS = 60
+FULLSCREEN = True
+
+SOUNDS_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "sounds"
+)
+
+KEY_SOUND = os.path.join(
+    SOUNDS_DIR,
+    "enter.wav"
+)
+
+LOVE_SOUND = os.path.join(
+    SOUNDS_DIR,
+    "love_you.wav"
+)
+
+HEART_START_DELAY = 1000
+
+
+# HEART ANIMATION TIMING
+# All values are percentages of the audio duration.
+#
+# Example:
+# 0.20 = 20% of the audio
+# 0.50 = 50% of the audio
+# 0.65 = 65% of the audio
+#
+# Change these values to easily control the animation.
+
+# Outline starts immediately and finishes here.
+OUTLINE_END_PERCENT = 0.20
+
+# Fill starts here.
+FILL_START_PERCENT = 0.18
+
+# Fill finishes here.
+# Lower value = faster fill.
+FILL_END_PERCENT = 0.50
+
+# Center "I Love You" starts appearing here.
+# Lower value = appears earlier.
+CENTER_START_PERCENT = 0.40
+
+
+# HEART CONFIGURATION
+
+SCALE = 20
+
+OUTLINE_PARTICLES = 150
+FILL_PARTICLES = 90
+
+OUTLINE_MIN_GAP = 30
+FILL_MIN_GAP = 25
+
+WORDS = [
+    "love you",
+    "Love You",
+    "LOVE YOU"
+]
+
+CENTER_TEXT = " I Love You "
+
+
+# COLORS
+
+COLORS = [
+    "#8B0000",
+    "#A00000",
+    "#B00000",
+    "#C00000",
+    "#D00000",
+    "#E00000",
+    "#FF0000",
+    "#FF1A1A",
+    "#FF3333"
+]
+
+CENTER_COLOR = "#FFF5F5EA"
+
+
+# FONTS
+
+OUTLINE_FONT = (
+    "Arial",
+    14,
+    "bold"
+)
+
+FILL_FONT = (
+    "Arial",
+    10,
+    "bold"
+)
+
+CENTER_FONT = (
+    "Georgia",
+    38,
+    "bold"
+)
+
+
+# PARTICLE FADE
+
+FADE_SPEED_MIN = 14
+FADE_SPEED_RANDOM = 4
+
+
+# GLOW
+
+GLOW_ENABLED = True
+GLOW_LAYERS = 3
+
+
+# MATRIX
+
+# The Matrix now repeats I LOVE YOU vertically. 
+MATRIX_CHARACTERS = list(
+    "UOYEVOLI" 
+)
+
+MATRIX_COLUMN_WIDTH = 22
+
+MATRIX_SPEED_MIN = 4
+MATRIX_SPEED_MAX = 10
+
+MATRIX_FONT = (
+    "Consolas",
+    13,
+    "bold"
+)
+
+
+# HEART MATRIX
+
+HEART_MATRIX_SPEED_MIN = 3
+HEART_MATRIX_SPEED_MAX = 8
+
+HEART_MATRIX_DENSITY = 1.0
+HEART_MATRIX_OPACITY = 0.55
+
+
+# PARTICLE
+
+@dataclass
+class Particle:
+
+    x: float
+    y: float
+    text: str
+
+    color: str
+    font: tuple
+
+    order: int
+
+    alpha: int = 0
+
+    delay: int = 0
+
+    flicker: float = 0.0
+
+    canvas_ids: list = None
+
+    def __post_init__(self):
+
+        if self.canvas_ids is None:
+
+            self.canvas_ids = []
+
+
+# AUDIO
+
+def get_wav_duration(path):
+
+    try:
+
+        with wave.open(path, "rb") as audio:
+
+            frames = audio.getnframes()
+            frame_rate = audio.getframerate()
+
+            return frames / float(frame_rate)
+
+    except Exception as error:
+
+        print(
+            "Could not read audio duration:",
+            error
+        )
+
+        return 5.0
+
+
+def play_sound(path):
+
+    try:
+
+        winsound.PlaySound(
+            path,
+            winsound.SND_FILENAME
+            | winsound.SND_ASYNC
+        )
+
+    except Exception as error:
+
+        print(
+            "Could not play sound:",
+            error
+        )
+
+
+# HEART EQUATION
+
+def heart_function(x, y):
+
+    return (
+        (x * x + y * y - 1) ** 3
+        - x * x * y ** 3
+    )
+
+
+def heart_point(t):
+
+    x = (
+        16
+        * math.sin(t) ** 3
+    )
+
+    y = (
+        13 * math.cos(t)
+        - 5 * math.cos(2 * t)
+        - 2 * math.cos(3 * t)
+        - math.cos(4 * t)
+    )
+
+    return x, y
+
+
+# BUILD OUTLINE PARTICLES
+
+def build_outline_particles(
+    count,
+    min_gap,
+    center_x,
+    center_y
+):
+
+    candidates = []
+
+    samples = 5000
+
+    for i in range(samples):
+
+        t = (
+            2
+            * math.pi
+            * i
+            / samples
+        )
+
+        x, y = heart_point(t)
+
+        candidates.append(
+            (x, y)
+        )
+
+    selected = []
+
+    for point in candidates:
+
+        if not selected:
+
+            selected.append(point)
+
+            continue
+
+        too_close = False
+
+        for existing in selected:
+
+            distance = math.sqrt(
+                (
+                    point[0]
+                    - existing[0]
+                ) ** 2
+                +
+                (
+                    point[1]
+                    - existing[1]
+                ) ** 2
+            )
+
+            if distance < min_gap / SCALE:
+
+                too_close = True
+
+                break
+
+        if not too_close:
+
+            selected.append(point)
+
+        if len(selected) >= count:
+
+            break
+
+    random.shuffle(selected)
+
+    particles = []
+
+    for index, (x, y) in enumerate(selected):
+
+        screen_x = (
+            center_x
+            + x * SCALE
+        )
+
+        screen_y = (
+            center_y
+            - y * SCALE
+        )
+
+        particles.append(
+            Particle(
+                x=screen_x,
+                y=screen_y,
+                text=random.choice(WORDS),
+                color=random.choice(COLORS),
+                font=OUTLINE_FONT,
+                order=index,
+                flicker=random.uniform(
+                    0,
+                    math.pi * 2
+                )
+            )
+        )
+
+    particles.sort(
+        key=lambda p:
+        math.atan2(
+            -(
+                p.y
+                - center_y
+            ),
+            p.x
+            - center_x
+        )
+    )
+
+    for index, particle in enumerate(particles):
+
+        particle.order = index
+
+    return particles
+
+
+# BUILD FILL PARTICLES
+
+def build_fill_particles(count, min_gap, center_x, center_y):
+    selected = []
+
+    attempts = 0
+    max_attempts = count * 300
+
+    # Heart dimensions
+    HEART_WIDTH = 16
+    HEART_HEIGHT = 13
+
+    # Keep the filler slightly inside the outline
+    INNER_SCALE = 0.88
+
+    while len(selected) < count and attempts < max_attempts:
+        attempts += 1
+
+        # Generate a random point inside the heart's bounding box
+        x = random.uniform(
+            -HEART_WIDTH * INNER_SCALE,
+            HEART_WIDTH * INNER_SCALE
+        )
+
+        y = random.uniform(
+            -HEART_HEIGHT * INNER_SCALE,
+            HEART_HEIGHT * INNER_SCALE
+        )
+
+        # Convert the point to screen coordinates
+        screen_x = center_x + x * SCALE
+        screen_y = center_y - y * SCALE
+
+        # Check whether the point is inside the same heart shape
+        # used by the outline.
+
+        # Convert to normalized heart coordinates
+        normalized_x = x / INNER_SCALE
+        normalized_y = y / INNER_SCALE
+
+        # Find the closest point on the parametric heart.
+        inside = False
+
+        samples = 120
+
+        previous_x, previous_y = heart_point(0)
+
+        for i in range(1, samples + 1):
+            t = (
+                2
+                * math.pi
+                * i
+                / samples
+            )
+
+            current_x, current_y = heart_point(t)
+
+            # Check whether the horizontal ray from the point
+            # crosses the heart boundary.
+            if (
+                (previous_y > normalized_y)
+                != (current_y > normalized_y)
+            ):
+                intersection_x = (
+                    previous_x
+                    + (
+                        (normalized_y - previous_y)
+                        / (current_y - previous_y)
+                    )
+                    * (current_x - previous_x)
+                )
+
+                if normalized_x < intersection_x:
+                    inside = not inside
+
+            previous_x = current_x
+            previous_y = current_y
+
+        if not inside:
+            continue
+
+        # Keep particles separated
+
+        valid = True
+
+        for existing in selected:
+            distance = math.sqrt(
+                (x - existing[0]) ** 2
+                + (y - existing[1]) ** 2
+            )
+
+            if distance < min_gap / SCALE:
+                valid = False
+                break
+
+        if not valid:
+            continue
+
+        selected.append((x, y))
+
+    particles = []
+
+    random.shuffle(selected)
+
+    for index, (x, y) in enumerate(selected):
+        screen_x = center_x + x * SCALE
+        screen_y = center_y - y * SCALE
+
+        particles.append(
+            Particle(
+                x=screen_x,
+                y=screen_y,
+                text=random.choice(WORDS),
+                color=random.choice(COLORS),
+                font=FILL_FONT,
+                order=index,
+                flicker=random.uniform(
+                    0,
+                    math.pi * 2
+                )
+            )
+        )
+
+    return particles
+
+# LOVE HEART APPLICATION
+
+class LoveHeart:
+
+    def __init__(self, root):
+
+        self.root = root
+
+        self.root.title(
+            "LOVE.EXE"
+        )
+
+        self.root.configure(
+            bg=BACKGROUND_COLOR
+        )
+
+        if FULLSCREEN:
+
+            self.root.attributes(
+                "-fullscreen",
+                True
+            )
+
+        else:
+
+            self.root.geometry(
+                f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}"
+            )
+
+        self.root.bind(
+            "<Key>",
+            self.handle_key
+        )
+
+        self.root.bind(
+            "<Escape>",
+            self.close
+        )
+
+        self.canvas = tk.Canvas(
+            self.root,
+            width=WINDOW_WIDTH,
+            height=WINDOW_HEIGHT,
+            bg=BACKGROUND_COLOR,
+            highlightthickness=0
+        )
+
+        self.canvas.pack(
+            fill="both",
+            expand=True
+        )
+
+        # State
+
+        self.state = "intro"
+
+        self.starting = False
+
+        self.running = False
+
+        self.frame = 0
+
+        self.particles = []
+
+        self.previous_center = None
+
+        self.center_start = 0
+
+        # Audio synchronization
+
+        self.audio_duration = 5.0
+
+        self.animation_end_frame = 1
+
+        self.audio_start_time = None
+
+        # Heart center
+
+        self.heart_center_x = 0
+
+        self.heart_center_y = 0
+
+        # Matrix
+
+        self.heart_matrix_columns = []
+
+        self.matrix_columns = []
+
+        self.root.update_idletasks()
+
+        self.matrix_columns = (
+            self.create_matrix_columns()
+        )
+
+        self.draw_intro()
+
+        self.animate_matrix()
+
+    # KEY HANDLER
+
+    def handle_key(self, event):
+
+        if self.state != "intro":
+
+            return
+
+        if self.starting:
+
+            return
+
+        self.starting = True
+
+        play_sound(
+            KEY_SOUND
+        )
+
+        self.show_transition()
+
+    # MATRIX COLUMNS
+
+    def create_matrix_columns(
+        self,
+        heart_mode=False
+    ):
+
+        width = self.canvas.winfo_width()
+
+        if width <= 1:
+
+            width = self.root.winfo_width()
+
+        if width <= 1:
+
+            width = WINDOW_WIDTH
+
+        column_count = max(
+            1,
+            int(
+                width
+                / MATRIX_COLUMN_WIDTH
+            )
+        )
+
+        columns = []
+
+        for index in range(column_count):
+
+            columns.append(
+                {
+                    "x":
+                        index
+                        * MATRIX_COLUMN_WIDTH,
+
+                    "y":
+                        random.randint(
+                            -WINDOW_HEIGHT,
+                            0
+                        ),
+
+                    "speed":
+                        random.randint(
+                            HEART_MATRIX_SPEED_MIN
+                            if heart_mode
+                            else MATRIX_SPEED_MIN,
+
+                            HEART_MATRIX_SPEED_MAX
+                            if heart_mode
+                            else MATRIX_SPEED_MAX
+                        ),
+
+                    "length":
+                        random.randint(
+                            5,
+                            16
+                        ),
+
+                    "chars":
+                        list(
+                            MATRIX_CHARACTERS
+                        )
+                }
+            )
+
+        return columns
+
+    # MATRIX
+
+    def draw_matrix(
+        self,
+        heart_mode=False
+    ):
+
+        self.canvas.delete(
+            "matrix"
+        )
+
+        width = self.root.winfo_width()
+
+        height = self.root.winfo_height()
+
+        if width <= 1:
+
+            width = WINDOW_WIDTH
+
+        if height <= 1:
+
+            height = WINDOW_HEIGHT
+
+        columns = (
+            self.heart_matrix_columns
+            if heart_mode
+            else self.matrix_columns
+        )
+
+        for column in columns:
+
+            x = column["x"]
+
+            y = column["y"]
+
+            speed = column["speed"]
+
+            length = column["length"]
+
+            chars = column["chars"]
+
+            for index in range(length):
+
+                char_y = (
+                    y
+                    - index * 18
+                )
+
+                if (
+                    char_y < 0
+                    or char_y > height
+                ):
+
+                    continue
+
+                # Repeat I LOVE YOU vertically.
+                text = chars[
+                    index % len(chars)
+                ]
+
+                if index == 0:
+
+                    color = "#D81010"
+
+                else:
+
+                    color = "#740505"
+
+                self.canvas.create_text(
+                    x,
+                    char_y,
+                    text=text,
+                    fill=color,
+                    font=MATRIX_FONT,
+                    anchor="nw",
+                    tags="matrix"
+                )
+
+            column["y"] += speed
+
+            if (
+                column["y"]
+                - length * 18
+                > height
+            ):
+
+                column["y"] = random.randint(
+                    -500,
+                    -50
+                )
+
+    # INTRO MATRIX
+
+    def animate_matrix(self):
+
+        if self.state != "intro":
+
+            return
+
+        self.draw_matrix(
+            heart_mode=False
+        )
+
+        self.draw_intro_text()
+
+        self.root.after(
+            int(1000 / FPS),
+            self.animate_matrix
+        )
+
+    # INTRO SCREEN
+
+    def draw_intro(self):
+
+        self.canvas.delete(
+            "all"
+        )
+
+        self.draw_matrix(
+            heart_mode=False
+        )
+
+        self.draw_intro_text()
+
+    def draw_intro_text(self):
+
+        self.canvas.delete(
+            "intro_text"
+        )
+
+        center_x = (
+            self.root.winfo_width()
+            / 2
+        )
+
+        center_y = (
+            self.root.winfo_height()
+            / 2
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y - 80,
+            text="LOVE.EXE",
+            fill="#FF0000",
+            font=(
+                "Consolas",
+                48,
+                "bold"
+            ),
+            anchor="center",
+            tags="intro_text"
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y,
+            text="[ SYSTEM READY ]",
+            fill="#FFFFFF",
+            font=(
+                "Consolas",
+                18
+            ),
+            anchor="center",
+            tags="intro_text"
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y + 70,
+            text="[ PRESS ANY KEY ]",
+            fill="#FF3333",
+            font=(
+                "Consolas",
+                18,
+                "bold"
+            ),
+            anchor="center",
+            tags="intro_text"
+        )
+
+    # TRANSITION SCREEN
+
+    def show_transition(self):
+
+        self.state = "transition"
+
+        self.canvas.delete(
+            "all"
+        )
+
+        self.draw_matrix(
+            heart_mode=False
+        )
+
+        center_x = (
+            self.root.winfo_width()
+            / 2
+        )
+
+        center_y = (
+            self.root.winfo_height()
+            / 2
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y - 120,
+            text="CONNECTION ESTABLISHED",
+            fill="#FF0000",
+            font=(
+                "Consolas",
+                26,
+                "bold"
+            ),
+            anchor="center"
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y - 40,
+            text="> ACCESS GRANTED",
+            fill="#FF3333",
+            font=(
+                "Consolas",
+                18,
+                "bold"
+            ),
+            anchor="center"
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y + 10,
+            text="> INITIALIZING...",
+            fill="#FF3333",
+            font=(
+                "Consolas",
+                18,
+                "bold"
+            ),
+            anchor="center"
+        )
+
+        self.canvas.create_text(
+            center_x,
+            center_y + 60,
+            text="> PLEASE WAIT...",
+            fill="#FF3333",
+            font=(
+                "Consolas",
+                18,
+                "bold"
+            ),
+            anchor="center"
+        )
+
+        # Static progress bar
+
+        bar_width = 420
+
+        bar_height = 18
+
+        bar_x = (
+            center_x
+            - bar_width / 2
+        )
+
+        bar_y = (
+            center_y
+            + 120
+        )
+
+        self.canvas.create_rectangle(
+            bar_x,
+            bar_y,
+            bar_x + bar_width,
+            bar_y + bar_height,
+            outline="#660000",
+            width=2
+        )
+
+        self.canvas.create_rectangle(
+            bar_x + 4,
+            bar_y + 4,
+            bar_x + bar_width - 4,
+            bar_y + bar_height - 4,
+            fill="#990000",
+            outline=""
+        )
+
+        self.root.after(
+            HEART_START_DELAY,
+            self.start_animation
+        )
+
+    # START HEART ANIMATION
+
+    def start_animation(self):
+
+        self.starting = False
+
+        self.state = "animation"
+
+        self.canvas.delete(
+            "all"
+        )
+
+        self.frame = 0
+
+        self.running = True
+
+        self.previous_center = None
+
+        # Get actual canvas dimensions
+
+        canvas_width = self.canvas.winfo_width()
+
+        canvas_height = self.canvas.winfo_height()
+
+        if canvas_width <= 1:
+
+            canvas_width = WINDOW_WIDTH
+
+        if canvas_height <= 1:
+
+            canvas_height = WINDOW_HEIGHT
+
+        self.heart_center_x = (
+            canvas_width / 2
+        )
+
+        self.heart_center_y = (
+            canvas_height / 2
+        )
+
+        # Read exact WAV duration
+
+        self.audio_duration = (
+            get_wav_duration(
+                LOVE_SOUND
+            )
+        )
+
+        self.animation_end_frame = max(
+            1,
+            round(
+                self.audio_duration
+                * FPS
+            )
+        )
+
+        # Matrix
+
+        self.heart_matrix_columns = (
+            self.create_matrix_columns(
+                heart_mode=True
+            )
+        )
+
+        self.animate_heart_matrix()
+
+        # Build heart
+
+        self.outline = (
+            build_outline_particles(
+                OUTLINE_PARTICLES,
+                OUTLINE_MIN_GAP,
+                self.heart_center_x,
+                self.heart_center_y
+            )
+        )
+
+        self.fill = (
+            build_fill_particles(
+                FILL_PARTICLES,
+                FILL_MIN_GAP,
+                self.heart_center_x,
+                self.heart_center_y
+            )
+        )
+
+        # AUDIO-SYNCHRONIZED TIMING
+
+        total_frames = (
+            self.animation_end_frame
+        )
+
+        # OUTLINE
+
+        outline_span = (
+            max(
+                (
+                    p.order
+                    for p in self.outline
+                ),
+                default=0
+            )
+        )
+
+        outline_end_frame = int(
+            total_frames
+            * OUTLINE_END_PERCENT
+        )
+
+        self.frames_per_step = (
+            outline_end_frame
+            / max(
+                1,
+                outline_span
+            )
+        )
+
+        for particle in self.outline:
+
+            particle.delay = int(
+                particle.order
+                * self.frames_per_step
+            )
+
+        # FILL
+
+        self.fill_start_frame = int(
+            total_frames
+            * FILL_START_PERCENT
+        )
+
+        fill_end_frame = int(
+            total_frames
+            * FILL_END_PERCENT
+        )
+
+        fill_available = max(
+            1,
+            fill_end_frame
+            - self.fill_start_frame
+        )
+
+        fill_span = (
+            max(
+                (
+                    p.order
+                    for p in self.fill
+                ),
+                default=0
+            )
+        )
+
+        for particle in self.fill:
+
+            normalized = (
+                particle.order
+                / max(
+                    1,
+                    fill_span
+                )
+            )
+
+            particle.delay = (
+                self.fill_start_frame
+                + int(
+                    normalized
+                    * fill_available
+                )
+            )
+
+        # CENTER TEXT
+
+        self.center_start = int(
+            total_frames
+            * CENTER_START_PERCENT
+        )
+
+        # All particles
+
+        self.particles = (
+            self.outline
+            + self.fill
+        )
+
+        # Start audio
+
+        self.audio_start_time = (
+            time.perf_counter()
+        )
+
+        play_sound(
+            LOVE_SOUND
+        )
+
+        self.animate()
+
+    # HEART MATRIX
+
+    def animate_heart_matrix(self):
+
+        if self.state != "animation":
+
+            return
+
+        self.draw_matrix(
+            heart_mode=True
+        )
+
+        self.root.after(
+            int(1000 / FPS),
+            self.animate_heart_matrix
+        )
+
+    # CREATE PARTICLE
+
+    def create_particle(
+        self,
+        particle
+    ):
+
+        particle.canvas_ids = []
+
+        if GLOW_ENABLED:
+
+            for layer in range(
+                GLOW_LAYERS,
+                0,
+                -1
+            ):
+
+                size = (
+                    particle.font[1]
+                    + layer * 4
+                )
+
+                glow_font = (
+                    particle.font[0],
+                    size,
+                    particle.font[2]
+                )
+
+                if layer == 3:
+
+                    glow_color = "#220000"
+
+                elif layer == 2:
+
+                    glow_color = "#330000"
+
+                else:
+
+                    glow_color = "#550000"
+
+                glow_id = (
+                    self.canvas.create_text(
+                        particle.x,
+                        particle.y,
+                        text=particle.text,
+                        font=glow_font,
+                        fill=glow_color,
+                        anchor="center"
+                    )
+                )
+
+                particle.canvas_ids.append(
+                    glow_id
+                )
+
+        text_id = (
+            self.canvas.create_text(
+                particle.x,
+                particle.y,
+                text=particle.text,
+                font=particle.font,
+                fill=particle.color,
+                anchor="center"
+            )
+        )
+
+        particle.canvas_ids.append(
+            text_id
+        )
+
+    # PARTICLE ALPHA
+
+    def set_particle_alpha(
+        self,
+        particle,
+        alpha
+    ):
+
+        if not particle.canvas_ids:
+
+            return
+
+        value = (
+            max(
+                0,
+                min(
+                    255,
+                    alpha
+                )
+            )
+            / 255
+        )
+
+        if GLOW_ENABLED:
+
+            for index, canvas_id in enumerate(
+                particle.canvas_ids[:-1]
+            ):
+
+                if index == 0:
+
+                    base = 20
+
+                elif index == 1:
+
+                    base = 30
+
+                else:
+
+                    base = 50
+
+                red = int(
+                    base * value
+                )
+
+                color = (
+                    f"#{red:02x}0000"
+                )
+
+                self.canvas.itemconfig(
+                    canvas_id,
+                    fill=color
+                )
+
+        main_id = (
+            particle.canvas_ids[-1]
+        )
+
+        hex_color = (
+            particle.color
+            .replace("#", "")
+        )
+
+        red = int(
+            int(
+                hex_color[0:2],
+                16
+            )
+            * value
+        )
+
+        green = int(
+            int(
+                hex_color[2:4],
+                16
+            )
+            * value
+        )
+
+        blue = int(
+            int(
+                hex_color[4:6],
+                16
+            )
+            * value
+        )
+
+        color = (
+            f"#{red:02x}"
+            f"{green:02x}"
+            f"{blue:02x}"
+        )
+
+        self.canvas.itemconfig(
+            main_id,
+            fill=color
+        )
+
+    # CENTER TEXT
+
+    def draw_center_text(self):
+
+        if (
+            self.frame
+            <= self.center_start
+        ):
+
+            return
+
+        progress = min(
+            1.0,
+            (
+                self.frame
+                - self.center_start
+            ) / 60
+        )
+
+        center_alpha = int(
+            255
+            * (
+                1
+                - math.exp(
+                    -progress * 8
+                )
+            )
+        )
+
+        # Fixed size.
+        # No heartbeat.
+
+        size = CENTER_FONT[1]
+
+        font = (
+            CENTER_FONT[0],
+            size,
+            CENTER_FONT[2]
+        )
+
+        if self.previous_center:
+
+            self.canvas.delete(
+                self.previous_center
+            )
+
+        # Glow
+
+        glow_id = (
+            self.canvas.create_text(
+                self.heart_center_x,
+                self.heart_center_y,
+                text=CENTER_TEXT,
+                font=(
+                    CENTER_FONT[0],
+                    size + 14,
+                    CENTER_FONT[2]
+                ),
+                fill="#440000",
+                anchor="center"
+            )
+        )
+
+        value = (
+            center_alpha / 255
+        )
+
+        red = int(
+            255 * value
+            + 80 * (1 - value)
+        )
+
+        green = int(
+            245 * value
+        )
+
+        blue = int(
+            245 * value
+        )
+
+        color = (
+            f"#{red:02x}"
+            f"{green:02x}"
+            f"{blue:02x}"
+        )
+
+        center_id = (
+            self.canvas.create_text(
+                self.heart_center_x,
+                self.heart_center_y,
+                text=CENTER_TEXT,
+                font=font,
+                fill=color,
+                anchor="center"
+            )
+        )
+
+        self.canvas.tag_lower(
+            glow_id,
+            center_id
+        )
+
+        self.previous_center = (
+            center_id
+        )
+
+    # ANIMATE
+
+    def animate(self):
+
+        if not self.running:
+
+            return
+
+        self.frame += 1
+
+        # Particles
+
+        for particle in self.particles:
+
+            if (
+                self.frame
+                > particle.delay
+                and particle.alpha < 255
+            ):
+
+                particle.alpha = min(
+                    255,
+                    particle.alpha
+                    + FADE_SPEED_MIN
+                    + random.randint(
+                        0,
+                        FADE_SPEED_RANDOM
+                    )
+                )
+
+                if not particle.canvas_ids:
+
+                    self.create_particle(
+                        particle
+                    )
+
+            if particle.alpha >= 255:
+
+                flick = (
+                    0.75
+                    + 0.25
+                    * math.sin(
+                        self.frame
+                        * 0.04
+                        + particle.flicker
+                    )
+                )
+
+            else:
+
+                flick = 1.0
+
+            alpha = int(
+                particle.alpha
+                * flick
+            )
+
+            if particle.canvas_ids:
+
+                self.set_particle_alpha(
+                    particle,
+                    alpha
+                )
+
+        # Center text
+
+        self.draw_center_text()
+
+        # End with audio
+
+        if self.animation_finished():
+
+            time.sleep(1)
+            self.show_finished()
+
+            return
+
+        self.root.after(
+            int(1000 / FPS),
+            self.animate
+        )
+
+    # FINISH CHECK
+
+    def animation_finished(self):
+
+        if self.audio_start_time is not None:
+
+            elapsed = (
+                time.perf_counter()
+                - self.audio_start_time
+            )
+
+            return (
+                elapsed
+                >= self.audio_duration
+            )
+
+        return (
+            self.frame
+            >= self.animation_end_frame
+        )
+
+    # FINISHED
+
+    def show_finished(self):
+
+        self.running = False
+
+        self.root.destroy()
+
+    # CLOSE
+
+    def close(self, event=None):
+
+        self.running = False
+
+        try:
+
+            winsound.PlaySound(
+                None,
+                0
+            )
+
+        except Exception:
+
+            pass
+
+        self.root.destroy()
+
+
+# MAIN
+
+def main():
+
+    root = tk.Tk()
+
+    LoveHeart(
+        root
+    )
+
+    root.mainloop()
+
+
+if __name__ == "__main__":
+
+    main()
