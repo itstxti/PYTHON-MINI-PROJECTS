@@ -34,7 +34,7 @@ A desktop password generator built with **Python** and **Tkinter**.
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/password-generator
+cd python-mini-projects/password generator
 python password_generator.py
 ```
 

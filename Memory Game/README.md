@@ -60,7 +60,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/memory-game
+cd python-mini-projects/memory game
 python memory_game.py
 ```
 

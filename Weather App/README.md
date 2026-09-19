@@ -46,7 +46,7 @@ Clone the repository:
 
 ```
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/weather-app
+cd python-mini-projects/weather app
 python weather_app.py
 ```
 

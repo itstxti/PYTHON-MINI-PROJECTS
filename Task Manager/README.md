@@ -48,7 +48,7 @@ Clone the repository:
 
 ```bash id="4q4qv7"
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/task-manager
+cd python-mini-projects/task manager
 python task_manager.py
 ```
 

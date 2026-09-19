@@ -31,7 +31,7 @@ A simple desktop expense tracker built with **Python**, **Tkinter**, and **SQLit
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/expense-tracker
+cd python-mini-projects/expense tracker
 python expense_tracker.py
 ```
 

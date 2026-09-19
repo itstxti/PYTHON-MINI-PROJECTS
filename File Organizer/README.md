@@ -35,7 +35,7 @@ A simple desktop file organizer built with **Python** and **Tkinter**.
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/file-organizer
+cd python-mini-projects/file organizer
 python main.py
 ```
 
