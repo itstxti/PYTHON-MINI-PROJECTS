@@ -42,9 +42,7 @@ MENU_SOUND = os.path.join(
     "menu.wav"
 )
 
-HEART_START_DELAY = 1000
-
-
+HEART_START_DELAY = 1500
 
 # HEART ANIMATION TIMING
 
@@ -306,8 +304,22 @@ FADE_SPEED_RANDOM = 4
 # GLOW
 
 GLOW_ENABLED = True
-GLOW_LAYERS = 3
+GLOW_LAYERS = 2
+GLOW_SIZE_STEP = 7
 
+GLOW_COLORS = [
+    "#450202",
+    "#500202",
+    "#640101",
+]
+
+GLOW_COLORS_TITLE = [
+    "#1A1A1A",
+    "#303030",
+    "#484848",
+    "#666666",
+    "#888888"
+]
 
 
 # MATRIX
@@ -1300,13 +1312,11 @@ class LoveHeart:
             width=2
         )
 
-        self.canvas.create_rectangle(
-            bar_x + 4,
-            bar_y + 4,
-            bar_x + bar_width - 4,
-            bar_y + bar_height - 4,
-            fill="#990000",
-            outline=""
+        self.animate_loading_bar(
+            bar_x,
+            bar_y,
+            bar_width,
+            bar_height
         )
 
         self.root.after(
@@ -1316,6 +1326,79 @@ class LoveHeart:
 
     # START HEART ANIMATION
 
+    # ANIMATED LOADING BAR
+        # ANIMATED LOADING BAR
+
+    def animate_loading_bar(
+        self,
+        bar_x,
+        bar_y,
+        bar_width,
+        bar_height,
+        start_time=None
+    ):
+
+        if self.state != "transition":
+
+            return
+
+        if start_time is None:
+
+            start_time = time.perf_counter()
+
+        elapsed = (
+            time.perf_counter()
+            - start_time
+        )
+
+        duration = (
+            HEART_START_DELAY
+            / 1000
+        )
+
+        progress = min(
+            1.0,
+            elapsed / duration
+        )
+
+        self.canvas.delete(
+            "loading_progress"
+        )
+
+        inner_width = (
+            bar_width - 8
+        )
+
+        current_width = (
+            inner_width
+            * progress
+        )
+
+        if current_width > 0:
+
+            self.canvas.create_rectangle(
+                bar_x + 4,
+                bar_y + 4,
+                bar_x + 4 + current_width,
+                bar_y + bar_height - 4,
+                fill="#990000",
+                outline="",
+                tags="loading_progress"
+            )
+
+        if progress < 1:
+
+            self.root.after(
+                16,
+                lambda: self.animate_loading_bar(
+                    bar_x,
+                    bar_y,
+                    bar_width,
+                    bar_height,
+                    start_time
+                )
+            )
+ 
     def start_animation(self):
 
         self.starting = False
@@ -1518,6 +1601,10 @@ class LoveHeart:
 
         if GLOW_ENABLED:
 
+            # Create the largest layer first.
+            # Each layer is centered at exactly the
+            # same position as the main particle.
+
             for layer in range(
                 GLOW_LAYERS,
                 0,
@@ -1526,25 +1613,32 @@ class LoveHeart:
 
                 size = (
                     particle.font.cget("size")
-                    + layer * 4
+                    + layer * GLOW_SIZE_STEP
                 )
 
                 glow_font = tkfont.Font(
-                    font=particle.font,
-                    size=size
+                    family=particle.font.cget(
+                        "family"
+                    ),
+                    size=size,
+                    weight=particle.font.cget(
+                        "weight"
+                    )
                 )
 
-                if layer == 3:
+                color_index = (
+                    GLOW_LAYERS
+                    - layer
+                )
 
-                    glow_color = "#220000"
+                color_index = min(
+                    color_index,
+                    len(GLOW_COLORS) - 1
+                )
 
-                elif layer == 2:
-
-                    glow_color = "#330000"
-
-                else:
-
-                    glow_color = "#550000"
+                glow_color = GLOW_COLORS[
+                    color_index
+                ]
 
                 glow_id = (
                     self.canvas.create_text(
@@ -1576,6 +1670,12 @@ class LoveHeart:
             text_id
         )
 
+        # Main particle stays above all glow layers.
+
+        self.canvas.tag_raise(
+            text_id
+        )
+
     # PARTICLE ALPHA
 
     def set_particle_alpha(
@@ -1601,24 +1701,66 @@ class LoveHeart:
 
         if GLOW_ENABLED:
 
-            for index, canvas_id in enumerate(
-                particle.canvas_ids[:-1]
+            glow_count = min(
+                GLOW_LAYERS,
+                len(
+                    particle.canvas_ids
+                ) - 1
+            )
+
+            for index in range(
+                glow_count
             ):
 
-                if index == 0:
+                canvas_id = (
+                    particle.canvas_ids[
+                        index
+                    ]
+                )
 
-                    base = 20
+                # Stronger inner glow,
+                # weaker outer glow.
 
-                elif index == 1:
+                strength = (
+                    0.20
+                    + (
+                        index
+                        / max(
+                            1,
+                            glow_count - 1
+                        )
+                    )
+                    * 0.80
+                )
 
-                    base = 30
+                base_color = (
+                    GLOW_COLORS[
+                        min(
+                            index,
+                            len(
+                                GLOW_COLORS
+                            ) - 1
+                        )
+                    ]
+                )
 
-                else:
-
-                    base = 50
+                base_red = int(
+                    base_color[1:3],
+                    16
+                )
 
                 red = int(
-                    base * value
+                    base_red
+                    * value
+                    * strength
+                )
+
+                red = max(
+                    1,
+                    min(
+                        255,
+                        red
+                    )
                 )
 
                 color = (
@@ -1675,63 +1817,84 @@ class LoveHeart:
         )
 
     # CENTER TEXT
-
     def draw_center_text(self):
 
-        if (
-            self.frame
-            <= self.center_start
-        ):
-
+        if self.frame <= self.center_start:
             return
 
         progress = min(
             1.0,
-            (
-                self.frame
-                - self.center_start
-            ) / 60
+            (self.frame - self.center_start) / 60
         )
 
         center_alpha = int(
             255
             * (
                 1
-                - math.exp(
-                    -progress * 8
+                - math.exp(-progress * 8)
+            )
+        )
+
+        # Delete previous center elements
+        if hasattr(self, "center_text_items"):
+            for item in self.center_text_items:
+                self.canvas.delete(item)
+
+        size = CENTER_FONT.cget("size")
+
+        # ==========================================
+        # GLOW
+        # ==========================================
+
+        glow_items = []
+
+        if GLOW_ENABLED:
+
+            for layer in range(
+                GLOW_LAYERS,
+                0,
+                -1
+            ):
+
+                glow_size = (
+                    size
+                    + layer * GLOW_SIZE_STEP
                 )
-            )
-        )
 
-        size = CENTER_FONT.cget(
-            "size"
-        )
+                glow_font = tkfont.Font(
+                    family=CENTER_FONT.cget("family"),
+                    size=glow_size,
+                    weight=CENTER_FONT.cget("weight")
+                )
 
-        if self.previous_center:
+                color_index = min(
+                    GLOW_LAYERS - layer,
+                    len(GLOW_COLORS) - 1
+                )
 
-            self.canvas.delete(
-                self.previous_center
-            )
+                glow_color = GLOW_COLORS_TITLE[
+                color_index
+                ]
 
-        glow_font = tkfont.Font(
-            font=CENTER_FONT,
-            size=size + 14
-        )
 
-        glow_id = (
-            self.canvas.create_text(
-                self.heart_center_x,
-                self.heart_center_y,
-                text=CENTER_TEXT,
-                font=glow_font,
-                fill="#440000",
-                anchor="center"
-            )
-        )
+                glow_id = self.canvas.create_text(
+                    self.heart_center_x,
+                    self.heart_center_y,
+                    text=CENTER_TEXT,
+                    font=glow_font,
+                    fill=glow_color,
+                    anchor="center"
+                )
 
-        value = (
-            center_alpha / 255
-        )
+                glow_items.append(
+                    glow_id
+                )
+
+        # ==========================================
+        # MAIN "I LOVE YOU"
+        # ==========================================
+
+        value = center_alpha / 255
 
         red = int(
             255 * value
@@ -1752,24 +1915,21 @@ class LoveHeart:
             f"{blue:02x}"
         )
 
-        center_id = (
-            self.canvas.create_text(
-                self.heart_center_x,
-                self.heart_center_y,
-                text=CENTER_TEXT,
-                font=CENTER_FONT,
-                fill=color,
-                anchor="center"
-            )
+        center_id = self.canvas.create_text(
+            self.heart_center_x,
+            self.heart_center_y,
+            text=CENTER_TEXT,
+            font=CENTER_FONT,
+            fill=color,
+            anchor="center"
         )
 
-        self.canvas.tag_lower(
-            glow_id,
-            center_id
-        )
+        # Make sure main text is above the glow
+        self.canvas.tag_raise(center_id)
 
-        self.previous_center = (
-            center_id
+        self.center_text_items = (
+            glow_items
+            + [center_id]
         )
 
     # ANIMATE
