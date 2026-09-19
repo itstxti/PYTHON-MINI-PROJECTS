@@ -1773,26 +1773,29 @@ class MemoryGame:
     # ========================================================
 
     def create_score_card(
-        self,
-        parent,
-        title,
-        mode,
-        difficulty
-    ):
+            self,
+            parent,
+            title,
+            mode,
+            difficulty
+        ):
         card = tk.Frame(
             parent,
             bg=self.card_color,
+            width=275,
+            height=300,
             highlightbackground=self.border_color,
             highlightthickness=1
         )
 
         card.pack(
             side="left",
-            fill="both",
-            expand=True,
             padx=5,
             pady=5
         )
+
+        # Prevent the card from resizing to its contents
+        card.pack_propagate(False)
 
         title_label = tk.Label(
             card,
@@ -1841,192 +1844,107 @@ class MemoryGame:
                 scores
             )
 
-    # ========================================================
-    # Standard Score Table
-    # ========================================================
-
     def create_standard_score_table(
-        self,
-        parent,
-        scores
-    ):
-        header = tk.Frame(
+            self,
+            parent,
+            scores
+        ):
+        table_frame = tk.Frame(
             parent,
             bg=self.card_color
         )
 
-        header.pack(
+        table_frame.pack(
             fill="x",
-            padx=10,
-            pady=(5, 2)
+            padx=15,
+            pady=5
         )
 
-        columns = [
-            ("#", 3),
-            ("PLAYER", 12),
-            ("ATT.", 6),
-            ("TIME", 8)
-        ]
+        header = tk.Label(
+            table_frame,
+            text=f"{'#':<4}{'PLAYER':<14}{'ATT.':<8}{'TIME':>8}",
+            font=("Consolas", 10, "bold"),
+            bg=self.card_color,
+            fg=self.secondary_text,
+            anchor="w"
+        )
 
-        for text, width in columns:
+        header.pack(
+            fill="x",
+            pady=(0, 8)
+        )
 
-            label = tk.Label(
-                header,
-                text=text,
-                width=width,
-                anchor="w",
-                font=("Segoe UI", 8, "bold"),
+        for index, score in enumerate(scores, 1):
+
+            row = tk.Label(
+                table_frame,
+                text=(
+                    f"{index:<4}"
+                    f"{score['name']:<14}"
+                    f"{score['attempts']:<8}"
+                    f"{score['time']:>7.2f}s"
+                ),
+                font=("Consolas", 10),
                 bg=self.card_color,
-                fg=self.secondary_text
-            )
-
-            label.pack(
-                side="left"
-            )
-
-        for position, score in enumerate(
-            scores,
-            start=1
-        ):
-
-            row = tk.Frame(
-                parent,
-                bg=self.card_color
+                fg=self.text_color,
+                anchor="w"
             )
 
             row.pack(
                 fill="x",
-                padx=10,
                 pady=2
             )
-
-            values = [
-                str(position),
-                score.get(
-                    "name",
-                    "Player"
-                )[:12],
-                str(
-                    score.get(
-                        "attempts",
-                        0
-                    )
-                ),
-                f"{score.get('time', 0):.2f}s"
-            ]
-
-            for value, (_, width) in zip(
-                values,
-                columns
-            ):
-
-                label = tk.Label(
-                    row,
-                    text=value,
-                    width=width,
-                    anchor="w",
-                    font=("Segoe UI", 8),
-                    bg=self.card_color,
-                    fg=self.text_color
-                )
-
-                label.pack(
-                    side="left"
-                )
-
-    # ========================================================
-    # Challenge Score Table
-    # ========================================================
 
     def create_challenge_score_table(
-        self,
-        parent,
-        scores
-    ):
-        header = tk.Frame(
+            self,
+            parent,
+            scores
+        ):
+        table_frame = tk.Frame(
             parent,
             bg=self.card_color
         )
 
-        header.pack(
+        table_frame.pack(
             fill="x",
-            padx=10,
-            pady=(5, 2)
+            padx=15,
+            pady=5
         )
 
-        columns = [
-            ("#", 3),
-            ("PLAYER", 12),
-            ("TIME", 8),
-            ("ATT.", 6)
-        ]
+        header = tk.Label(
+            table_frame,
+            text=f"{'#':<4}{'PLAYER':<14}{'TIME':>8}{'ATT.':>8}",
+            font=("Consolas", 10, "bold"),
+            bg=self.card_color,
+            fg=self.secondary_text,
+            anchor="w"
+        )
 
-        for text, width in columns:
+        header.pack(
+            fill="x",
+            pady=(0, 8)
+        )
 
-            label = tk.Label(
-                header,
-                text=text,
-                width=width,
-                anchor="w",
-                font=("Segoe UI", 8, "bold"),
+        for index, score in enumerate(scores, 1):
+
+            row = tk.Label(
+                table_frame,
+                text=(
+                    f"{index:<4}"
+                    f"{score['name']:<14}"
+                    f"{score['time']:>7.2f}s"
+                    f"{score['attempts']:>8}"
+                ),
+                font=("Consolas", 10),
                 bg=self.card_color,
-                fg=self.secondary_text
-            )
-
-            label.pack(
-                side="left"
-            )
-
-        for position, score in enumerate(
-            scores,
-            start=1
-        ):
-
-            row = tk.Frame(
-                parent,
-                bg=self.card_color
+                fg=self.text_color,
+                anchor="w"
             )
 
             row.pack(
                 fill="x",
-                padx=10,
                 pady=2
             )
-
-            values = [
-                str(position),
-                score.get(
-                    "name",
-                    "Player"
-                )[:12],
-                f"{score.get('time', 0):.2f}s",
-                str(
-                    score.get(
-                        "attempts",
-                        0
-                    )
-                )
-            ]
-
-            for value, (_, width) in zip(
-                values,
-                columns
-            ):
-
-                label = tk.Label(
-                    row,
-                    text=value,
-                    width=width,
-                    anchor="w",
-                    font=("Segoe UI", 8),
-                    bg=self.card_color,
-                    fg=self.text_color
-                )
-
-                label.pack(
-                    side="left"
-                )
-
 
 # Run Application
 
