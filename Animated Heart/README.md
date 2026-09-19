@@ -21,7 +21,7 @@ An animated heart built with **Python** and **Tkinter**.
 
 ```bash
 git clone https://github.com/itstxti/python-mini-projects.git
-cd python-mini-projects/animated-heart
+cd python-mini-projects/animated heart
 python animated-heart.py
 ```
 ## Screenshot
