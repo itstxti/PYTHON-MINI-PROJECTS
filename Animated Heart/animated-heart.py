@@ -34,6 +34,11 @@ LOVE_SOUND = os.path.join(
     "love_you.wav"
 )
 
+MENU_SOUND = os.path.join(
+    SOUNDS_DIR,
+    "menu.wav"
+)
+
 HEART_START_DELAY = 1000
 
 
@@ -133,12 +138,28 @@ GLOW_LAYERS = 3
 
 # MATRIX
 
-# The Matrix now repeats I LOVE YOU vertically. 
+# Each column contains exactly:
+#
+# I
+# L
+# O
+# V
+# E
+# Y
+# O
+# U
+#
+# The sequence then repeats vertically.
+
 MATRIX_CHARACTERS = list(
-    "UOYEVOLI" 
+    "ILOVEYOU"
 )
 
-MATRIX_COLUMN_WIDTH = 22
+# Width between independent columns.
+MATRIX_COLUMN_WIDTH = 100
+
+# Vertical distance between letters.
+MATRIX_ROW_SPACING = 22
 
 MATRIX_SPEED_MIN = 4
 MATRIX_SPEED_MAX = 10
@@ -147,6 +168,19 @@ MATRIX_FONT = (
     "Consolas",
     13,
     "bold"
+)
+
+# Chance that an individual letter starts glitching
+# on each frame.
+MATRIX_GLITCH_CHANCE = 0.012
+
+# Duration of an individual glitch.
+MATRIX_GLITCH_MIN_FRAMES = 2
+MATRIX_GLITCH_MAX_FRAMES = 5
+
+# Characters that can temporarily replace a letter.
+MATRIX_GLITCH_CHARACTERS = (
+    "01<>[]{}\\/|#@$%&*+=?"
 )
 
 
@@ -211,14 +245,18 @@ def get_wav_duration(path):
         return 5.0
 
 
-def play_sound(path):
+def play_sound(path, loop=False):
 
     try:
 
+        flags = winsound.SND_FILENAME | winsound.SND_ASYNC
+
+        if loop:
+            flags |= winsound.SND_LOOP
+
         winsound.PlaySound(
             path,
-            winsound.SND_FILENAME
-            | winsound.SND_ASYNC
+            flags
         )
 
     except Exception as error:
@@ -377,6 +415,7 @@ def build_outline_particles(
 # BUILD FILL PARTICLES
 
 def build_fill_particles(count, min_gap, center_x, center_y):
+
     selected = []
 
     attempts = 0
@@ -390,9 +429,11 @@ def build_fill_particles(count, min_gap, center_x, center_y):
     INNER_SCALE = 0.88
 
     while len(selected) < count and attempts < max_attempts:
+
         attempts += 1
 
         # Generate a random point inside the heart's bounding box
+
         x = random.uniform(
             -HEART_WIDTH * INNER_SCALE,
             HEART_WIDTH * INNER_SCALE
@@ -404,6 +445,7 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         )
 
         # Convert the point to screen coordinates
+
         screen_x = center_x + x * SCALE
         screen_y = center_y - y * SCALE
 
@@ -411,10 +453,12 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         # used by the outline.
 
         # Convert to normalized heart coordinates
+
         normalized_x = x / INNER_SCALE
         normalized_y = y / INNER_SCALE
 
         # Find the closest point on the parametric heart.
+
         inside = False
 
         samples = 120
@@ -422,6 +466,7 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         previous_x, previous_y = heart_point(0)
 
         for i in range(1, samples + 1):
+
             t = (
                 2
                 * math.pi
@@ -433,10 +478,12 @@ def build_fill_particles(count, min_gap, center_x, center_y):
 
             # Check whether the horizontal ray from the point
             # crosses the heart boundary.
+
             if (
                 (previous_y > normalized_y)
                 != (current_y > normalized_y)
             ):
+
                 intersection_x = (
                     previous_x
                     + (
@@ -447,12 +494,14 @@ def build_fill_particles(count, min_gap, center_x, center_y):
                 )
 
                 if normalized_x < intersection_x:
+
                     inside = not inside
 
             previous_x = current_x
             previous_y = current_y
 
         if not inside:
+
             continue
 
         # Keep particles separated
@@ -460,25 +509,34 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         valid = True
 
         for existing in selected:
+
             distance = math.sqrt(
                 (x - existing[0]) ** 2
                 + (y - existing[1]) ** 2
             )
 
             if distance < min_gap / SCALE:
+
                 valid = False
+
                 break
 
         if not valid:
+
             continue
 
-        selected.append((x, y))
+        selected.append(
+            (x, y)
+        )
 
     particles = []
 
-    random.shuffle(selected)
+    random.shuffle(
+        selected
+    )
 
     for index, (x, y) in enumerate(selected):
+
         screen_x = center_x + x * SCALE
         screen_y = center_y - y * SCALE
 
@@ -498,6 +556,7 @@ def build_fill_particles(count, min_gap, center_x, center_y):
         )
 
     return particles
+
 
 # LOVE HEART APPLICATION
 
@@ -597,6 +656,11 @@ class LoveHeart:
 
         self.animate_matrix()
 
+        play_sound(
+            MENU_SOUND,
+            loop=True
+        )
+
     # KEY HANDLER
 
     def handle_key(self, event):
@@ -610,6 +674,15 @@ class LoveHeart:
             return
 
         self.starting = True
+
+        # Stop menu music
+
+        winsound.PlaySound(
+            None,
+            0
+        )
+
+        # Play enter sound
 
         play_sound(
             KEY_SOUND
@@ -640,11 +713,30 @@ class LoveHeart:
                 width
                 / MATRIX_COLUMN_WIDTH
             )
+            + 1
         )
 
         columns = []
 
-        for index in range(column_count):
+        for index in range(
+            column_count
+        ):
+
+            # Every column has exactly the same
+            # I -> L -> O -> V -> E -> Y -> O -> U
+            # sequence.
+
+            letters = []
+
+            for character in MATRIX_CHARACTERS:
+
+                letters.append(
+                    {
+                        "character": character,
+                        "glitch_character": None,
+                        "glitch_frames": 0
+                    }
+                )
 
             columns.append(
                 {
@@ -669,16 +761,8 @@ class LoveHeart:
                             else MATRIX_SPEED_MAX
                         ),
 
-                    "length":
-                        random.randint(
-                            5,
-                            16
-                        ),
-
-                    "chars":
-                        list(
-                            MATRIX_CHARACTERS
-                        )
+                    "letters":
+                        letters
                 }
             )
 
@@ -721,59 +805,172 @@ class LoveHeart:
 
             speed = column["speed"]
 
-            length = column["length"]
+            letters = column["letters"]
 
-            chars = column["chars"]
+            # ------------------------------------------------
+            # Draw exactly the 8 letters of ILOVEYOU
+            # ------------------------------------------------
 
-            for index in range(length):
+            for index, letter_data in enumerate(
+                letters
+            ):
 
                 char_y = (
                     y
-                    - index * 18
+                    + index
+                    * MATRIX_ROW_SPACING
                 )
 
                 if (
-                    char_y < 0
+                    char_y < -MATRIX_ROW_SPACING
                     or char_y > height
+                    + MATRIX_ROW_SPACING
                 ):
 
                     continue
 
-                # Repeat I LOVE YOU vertically.
-                text = chars[
-                    index % len(chars)
-                ]
+                # ------------------------------------------------
+                # Occasionally corrupt ONE individual letter
+                # ------------------------------------------------
 
-                if index == 0:
+                if (
+                    letter_data["glitch_frames"] <= 0
+                    and random.random()
+                    < MATRIX_GLITCH_CHANCE
+                ):
 
-                    color = "#D81010"
+                    letter_data[
+                        "glitch_character"
+                    ] = random.choice(
+                        MATRIX_GLITCH_CHARACTERS
+                    )
+
+                    letter_data[
+                        "glitch_frames"
+                    ] = random.randint(
+                        MATRIX_GLITCH_MIN_FRAMES,
+                        MATRIX_GLITCH_MAX_FRAMES
+                    )
+
+                # ------------------------------------------------
+                # Normal letter or corrupted letter
+                # ------------------------------------------------
+
+                if (
+                    letter_data["glitch_frames"]
+                    > 0
+                ):
+
+                    character = (
+                        letter_data[
+                            "glitch_character"
+                        ]
+                    )
+
+                    # Glitched character is brighter.
+
+                    color = "#FF3030"
+
+                    letter_data[
+                        "glitch_frames"
+                    ] -= 1
 
                 else:
 
-                    color = "#740505"
+                    character = (
+                        letter_data[
+                            "character"
+                        ]
+                    )
+
+                    # Head of the sequence is brighter.
+
+                    if index == 0:
+
+                        color = "#D81010"
+
+                    else:
+
+                        # Gradual fade down the sequence.
+
+                        fade_colors = [
+                            "#C41010",
+                            "#AE0D0D",
+                            "#980B0B",
+                            "#820909",
+                            "#6C0707",
+                            "#560505",
+                            "#400303"
+                        ]
+
+                        color = fade_colors[
+                            min(
+                                index - 1,
+                                len(
+                                    fade_colors
+                                ) - 1
+                            )
+                        ]
 
                 self.canvas.create_text(
                     x,
                     char_y,
-                    text=text,
+                    text=character,
                     fill=color,
                     font=MATRIX_FONT,
-                    anchor="nw",
+                    anchor="center",
                     tags="matrix"
                 )
 
+            # ------------------------------------------------
+            # Move entire sequence down
+            # ------------------------------------------------
+
             column["y"] += speed
+
+            # Once the complete sequence has left
+            # the screen, restart it above the screen.
+
+            sequence_height = (
+                len(MATRIX_CHARACTERS)
+                * MATRIX_ROW_SPACING
+            )
 
             if (
                 column["y"]
-                - length * 18
+                - sequence_height
                 > height
             ):
 
                 column["y"] = random.randint(
-                    -500,
-                    -50
+                    -(
+                        height
+                        + sequence_height
+                    ),
+                    -MATRIX_ROW_SPACING
                 )
+
+                column["speed"] = random.randint(
+                    HEART_MATRIX_SPEED_MIN
+                    if heart_mode
+                    else MATRIX_SPEED_MIN,
+
+                    HEART_MATRIX_SPEED_MAX
+                    if heart_mode
+                    else MATRIX_SPEED_MAX
+                )
+
+                # Reset all glitches.
+
+                for letter_data in column["letters"]:
+
+                    letter_data[
+                        "glitch_character"
+                    ] = None
+
+                    letter_data[
+                        "glitch_frames"
+                    ] = 0
 
     # INTRO MATRIX
 
@@ -1540,6 +1737,7 @@ class LoveHeart:
         if self.animation_finished():
 
             time.sleep(1)
+
             self.show_finished()
 
             return
