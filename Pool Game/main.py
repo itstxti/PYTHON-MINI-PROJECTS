@@ -201,6 +201,21 @@ game_over_options = [
 
 
 # =========================================================
+# PAUSE STATE
+# =========================================================
+
+paused = False
+
+pause_selected = 0
+
+pause_options = [
+    "RESUME",
+    "RESTART",
+    "QUIT"
+]
+
+
+# =========================================================
 # PLAYER STATE
 # =========================================================
 
@@ -636,6 +651,126 @@ def draw_game_over():
 
 
 # =========================================================
+# PAUSE MENU
+# =========================================================
+
+def draw_pause_menu():
+
+    overlay = pygame.Surface(
+        (
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT
+        ),
+        pygame.SRCALPHA
+    )
+
+    overlay.fill(
+        (0, 0, 0, 175)
+    )
+
+    screen.blit(
+        overlay,
+        (0, 0)
+    )
+
+    title_font = pygame.font.SysFont(
+        "arial",
+        52,
+        bold=True
+    )
+
+    option_font = pygame.font.SysFont(
+        "arial",
+        25,
+        bold=True
+    )
+
+    hint_font = pygame.font.SysFont(
+        "arial",
+        17
+    )
+
+    # -----------------------------------------------------
+    # TITLE
+    # -----------------------------------------------------
+
+    title = title_font.render(
+        "PAUSED",
+        True,
+        WHITE
+    )
+
+    title_rect = title.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            WINDOW_HEIGHT // 2 - 110
+        )
+    )
+
+    screen.blit(
+        title,
+        title_rect
+    )
+
+    # -----------------------------------------------------
+    # OPTIONS
+    # -----------------------------------------------------
+
+    for index, option in enumerate(
+        pause_options
+    ):
+
+        if index == pause_selected:
+
+            color = YELLOW
+
+        else:
+
+            color = GREY
+
+        text = option_font.render(
+            option,
+            True,
+            color
+        )
+
+        text_rect = text.get_rect(
+            center=(
+                WINDOW_WIDTH // 2,
+                WINDOW_HEIGHT // 2 +
+                index * 50
+            )
+        )
+
+        screen.blit(
+            text,
+            text_rect
+        )
+
+    # -----------------------------------------------------
+    # HINT
+    # -----------------------------------------------------
+
+    hint = hint_font.render(
+        "Use ↑ ↓ and ENTER",
+        True,
+        GREY
+    )
+
+    hint_rect = hint.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            WINDOW_HEIGHT // 2 + 180
+        )
+    )
+
+    screen.blit(
+        hint,
+        hint_rect
+    )
+
+
+# =========================================================
 # HUD
 # =========================================================
 
@@ -782,6 +917,9 @@ def draw_human_aim():
         return
 
     if game_over:
+        return
+
+    if paused:
         return
 
     if current_player != PLAYER_HUMAN:
@@ -1523,6 +1661,9 @@ def fire_human_shot():
     if game_over:
         return
 
+    if paused:
+        return
+
     if shot_in_progress:
         return
 
@@ -1611,6 +1752,9 @@ def reset_game():
 
     global game_over_selected
 
+    global paused
+    global pause_selected
+
     global current_player
 
     global player_group
@@ -1634,12 +1778,15 @@ def reset_game():
 
     waiting_for_start = False
 
+    paused = False
+
     # -----------------------------------------------------
     # MENU STATE
     # -----------------------------------------------------
 
     menu_selected = 0
     game_over_selected = 0
+    pause_selected = 0
 
     # -----------------------------------------------------
     # GAME OVER STATE
@@ -1733,6 +1880,7 @@ def reset_game():
     # -----------------------------------------------------
 
     ai = PoolAI()
+
 
 # =========================================================
 # PROCESS SHOT RESULT
@@ -2009,6 +2157,9 @@ def start_ai_turn():
     if game_over:
         return
 
+    if paused:
+        return
+
     if shot_in_progress:
         return
 
@@ -2066,6 +2217,9 @@ def fire_ai_shot():
     global human_shot_pending
 
     if current_shot is None:
+        return
+
+    if paused:
         return
 
     start_shot(
@@ -2168,19 +2322,63 @@ while running:
                     ] == "PLAY AGAIN":
 
                         reset_game()
-                        
-                        pass
+
+                elif event.key == pygame.K_ESCAPE:
+
+                    running = False
 
             # ---------------------------------------------
-            # EXIT
+            # PAUSE MENU
             # ---------------------------------------------
 
-            elif (
-                event.key == pygame.K_ESCAPE
-                and game_over
-            ):
+            elif paused:
 
-                running = False
+                if event.key == pygame.K_UP:
+
+                    pause_selected = (
+                        pause_selected - 1
+                    ) % len(pause_options)
+
+                elif event.key == pygame.K_DOWN:
+
+                    pause_selected = (
+                        pause_selected + 1
+                    ) % len(pause_options)
+
+                elif event.key == pygame.K_RETURN:
+
+                    selected_option = (
+                        pause_options[
+                            pause_selected
+                        ]
+                    )
+
+                    if selected_option == "RESUME":
+
+                        paused = False
+
+                    elif selected_option == "RESTART":
+
+                        reset_game()
+
+                    elif selected_option == "QUIT":
+
+                        running = False
+
+                elif event.key == pygame.K_ESCAPE:
+
+                    paused = False
+
+            # ---------------------------------------------
+            # ACTIVE GAME
+            # ---------------------------------------------
+
+            else:
+
+                if event.key == pygame.K_ESCAPE:
+
+                    paused = True
+                    pause_selected = 0
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -2192,6 +2390,7 @@ while running:
                 event.button == 1
                 and not waiting_for_start
                 and not game_over
+                and not paused
                 and current_player == PLAYER_HUMAN
                 and not shot_pending
                 and not shot_in_progress
@@ -2207,6 +2406,8 @@ while running:
             elif (
                 event.button == 4
                 and current_player == PLAYER_HUMAN
+                and not paused
+                and not game_over
             ):
 
                 human_power = min(
@@ -2221,6 +2422,8 @@ while running:
             elif (
                 event.button == 5
                 and current_player == PLAYER_HUMAN
+                and not paused
+                and not game_over
             ):
 
                 human_power = max(
@@ -2235,6 +2438,7 @@ while running:
     if (
         not waiting_for_start
         and not game_over
+        and not paused
     ):
 
         # -------------------------------------------------
@@ -2345,6 +2549,14 @@ while running:
     elif game_over:
 
         draw_game_over()
+
+    # -----------------------------------------------------
+    # PAUSE
+    # -----------------------------------------------------
+
+    elif paused:
+
+        draw_pause_menu()
 
     # =====================================================
     # DISPLAY
