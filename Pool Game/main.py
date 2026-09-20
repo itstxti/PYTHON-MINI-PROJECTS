@@ -56,6 +56,22 @@ GREY = (210, 210, 210)
 
 RED = (220, 70, 70)
 
+# HUD
+HUD_BACKGROUND = (8, 8, 10)
+HUD_BORDER = (55, 55, 60)
+
+TEXT_PRIMARY = (245, 245, 245)
+TEXT_SECONDARY = (145, 145, 150)
+
+SOLID_COLOR = (255, 190, 70)
+STRIPE_COLOR = (120, 180, 255)
+
+PANEL_BACKGROUND = (12, 12, 15)
+PANEL_BORDER = (70, 70, 75)
+
+STATUS_GREEN = (100, 220, 150)
+STATUS_BLUE = (120, 180, 255)
+
 
 # =========================================================
 # TABLE
@@ -239,16 +255,12 @@ shot_preview_timer = 0
 
 current_shot = None
 
-# True while the physical shot is taking place.
 shot_in_progress = False
 
-# Player who actually made the current shot.
 shot_shooter = None
 
-# Balls pocketed during the current shot.
 shot_pocketed = []
 
-# Kept for human-specific state.
 human_shot_pending = False
 
 
@@ -392,8 +404,6 @@ def first_hit_is_legal(
         else ai_group
     )
 
-    # Open table:
-    # any object ball except the 8 is legal.
     if shooter_group is None:
 
         return first_hit in (
@@ -448,7 +458,7 @@ def draw_start_screen():
     )
 
     overlay.fill(
-        (0, 0, 0, 165)
+        (0, 0, 0, 175)
     )
 
     screen.blit(
@@ -466,6 +476,11 @@ def draw_start_screen():
         "arial",
         28,
         bold=True
+    )
+
+    hint_font = pygame.font.SysFont(
+        "arial",
+        16
     )
 
     title = title_font.render(
@@ -517,6 +532,24 @@ def draw_start_screen():
             text_rect
         )
 
+    hint = hint_font.render(
+        "Use ↑ ↓ and ENTER",
+        True,
+        GREY
+    )
+
+    hint_rect = hint.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            WINDOW_HEIGHT // 2 + 115
+        )
+    )
+
+    screen.blit(
+        hint,
+        hint_rect
+    )
+
 
 # =========================================================
 # GAME OVER MENU
@@ -533,7 +566,7 @@ def draw_game_over():
     )
 
     overlay.fill(
-        (0, 0, 0, 175)
+        (0, 0, 0, 185)
     )
 
     screen.blit(
@@ -558,20 +591,14 @@ def draw_game_over():
         17
     )
 
-    # -----------------------------------------------------
-    # RESULT
-    # -----------------------------------------------------
-
     if game_won:
 
         message = "YOU WIN"
-
         message_color = YELLOW
 
     else:
 
         message = "AI WINS"
-
         message_color = RED
 
     title = title_font.render(
@@ -591,10 +618,6 @@ def draw_game_over():
         title,
         title_rect
     )
-
-    # -----------------------------------------------------
-    # OPTIONS
-    # -----------------------------------------------------
 
     for index, option in enumerate(
         game_over_options
@@ -626,10 +649,6 @@ def draw_game_over():
             text,
             text_rect
         )
-
-    # -----------------------------------------------------
-    # HINT
-    # -----------------------------------------------------
 
     hint = hint_font.render(
         "Use ↑ ↓ and ENTER",
@@ -665,7 +684,7 @@ def draw_pause_menu():
     )
 
     overlay.fill(
-        (0, 0, 0, 175)
+        (0, 0, 0, 185)
     )
 
     screen.blit(
@@ -673,26 +692,58 @@ def draw_pause_menu():
         (0, 0)
     )
 
+    panel_width = 330
+    panel_height = 310
+
+    panel_rect = pygame.Rect(
+        (
+            WINDOW_WIDTH - panel_width
+        ) // 2,
+        (
+            WINDOW_HEIGHT - panel_height
+        ) // 2,
+        panel_width,
+        panel_height
+    )
+
+    panel = pygame.Surface(
+        panel_rect.size,
+        pygame.SRCALPHA
+    )
+
+    panel.fill(
+        (10, 10, 12, 235)
+    )
+
+    pygame.draw.rect(
+        panel,
+        PANEL_BORDER,
+        panel.get_rect(),
+        1,
+        border_radius=12
+    )
+
+    screen.blit(
+        panel,
+        panel_rect
+    )
+
     title_font = pygame.font.SysFont(
         "arial",
-        52,
+        42,
         bold=True
     )
 
     option_font = pygame.font.SysFont(
         "arial",
-        25,
+        22,
         bold=True
     )
 
     hint_font = pygame.font.SysFont(
         "arial",
-        17
+        15
     )
-
-    # -----------------------------------------------------
-    # TITLE
-    # -----------------------------------------------------
 
     title = title_font.render(
         "PAUSED",
@@ -703,7 +754,7 @@ def draw_pause_menu():
     title_rect = title.get_rect(
         center=(
             WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 - 110
+            panel_rect.top + 55
         )
     )
 
@@ -712,17 +763,31 @@ def draw_pause_menu():
         title_rect
     )
 
-    # -----------------------------------------------------
-    # OPTIONS
-    # -----------------------------------------------------
-
     for index, option in enumerate(
         pause_options
     ):
 
-        if index == pause_selected:
+        selected = (
+            index == pause_selected
+        )
+
+        if selected:
 
             color = YELLOW
+
+            selection_rect = pygame.Rect(
+                panel_rect.left + 65,
+                panel_rect.top + 95 + index * 50,
+                panel_rect.width - 130,
+                38
+            )
+
+            pygame.draw.rect(
+                screen,
+                (45, 40, 10),
+                selection_rect,
+                border_radius=8
+            )
 
         else:
 
@@ -737,8 +802,7 @@ def draw_pause_menu():
         text_rect = text.get_rect(
             center=(
                 WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT // 2 +
-                index * 50
+                panel_rect.top + 114 + index * 50
             )
         )
 
@@ -747,20 +811,16 @@ def draw_pause_menu():
             text_rect
         )
 
-    # -----------------------------------------------------
-    # HINT
-    # -----------------------------------------------------
-
     hint = hint_font.render(
-        "Use ↑ ↓ and ENTER",
+        "↑ ↓ Select     ENTER Confirm     ESC Resume",
         True,
-        GREY
+        TEXT_SECONDARY
     )
 
     hint_rect = hint.get_rect(
         center=(
             WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 + 180
+            panel_rect.bottom - 27
         )
     )
 
@@ -771,140 +831,705 @@ def draw_pause_menu():
 
 
 # =========================================================
+# UI HELPERS
+# =========================================================
+
+def draw_panel(
+    rect,
+    fill=(10, 10, 12, 220),
+    border=PANEL_BORDER,
+    radius=10
+):
+
+    surface = pygame.Surface(
+        rect.size,
+        pygame.SRCALPHA
+    )
+
+    surface.fill(
+        fill
+    )
+
+    pygame.draw.rect(
+        surface,
+        border,
+        surface.get_rect(),
+        1,
+        border_radius=radius
+    )
+
+    screen.blit(
+        surface,
+        rect
+    )
+
+
+def draw_group_badge(
+    x,
+    y,
+    group,
+    align="left"
+):
+
+    font = pygame.font.SysFont(
+        "arial",
+        12,
+        bold=True
+    )
+
+    if group == "solid":
+
+        label = "SOLIDS"
+        color = SOLID_COLOR
+
+    elif group == "stripe":
+
+        label = "STRIPES"
+        color = STRIPE_COLOR
+
+    else:
+
+        label = "OPEN"
+        color = TEXT_SECONDARY
+
+    text = font.render(
+        label,
+        True,
+        color
+    )
+
+    padding_x = 8
+    padding_y = 4
+
+    width = (
+        text.get_width() +
+        padding_x * 2
+    )
+
+    height = (
+        text.get_height() +
+        padding_y * 2
+    )
+
+    rect = pygame.Rect(
+        0,
+        0,
+        width,
+        height
+    )
+
+    if align == "right":
+
+        rect.topright = (
+            x,
+            y
+        )
+
+    else:
+
+        rect.topleft = (
+            x,
+            y
+        )
+
+    pygame.draw.rect(
+        screen,
+        (
+            25,
+            25,
+            28
+        ),
+        rect,
+        border_radius=6
+    )
+
+    pygame.draw.rect(
+        screen,
+        color,
+        rect,
+        1,
+        border_radius=6
+    )
+
+    text_rect = text.get_rect(
+        center=rect.center
+    )
+
+    screen.blit(
+        text,
+        text_rect
+    )
+
+
+def draw_remaining_balls(
+    x,
+    y,
+    group,
+    align="left"
+):
+
+    numbers = remaining_numbers(
+        group
+    )
+
+    if group is None:
+
+        count = (
+            sum(
+                1
+                for ball in balls
+                if (
+                    ball.active
+                    and not ball.is_cue
+                    and ball.number != 8
+                )
+            )
+        )
+
+    else:
+
+        count = len(numbers)
+
+    font = pygame.font.SysFont(
+        "arial",
+        12
+    )
+
+    text = font.render(
+        f"{count} LEFT",
+        True,
+        TEXT_SECONDARY
+    )
+
+    if align == "right":
+
+        rect = text.get_rect(
+            top=y,
+            right=x
+        )
+
+    else:
+
+        rect = text.get_rect(
+            top=y,
+            left=x
+        )
+
+    screen.blit(
+        text,
+        rect
+    )
+
+
+# =========================================================
+# GAME STATUS
+# =========================================================
+
+def draw_game_status():
+
+    font = pygame.font.SysFont(
+        "arial",
+        10,
+        bold=True
+    )
+
+    if current_player == PLAYER_HUMAN:
+
+        if shot_in_progress:
+
+            text = "SHOT IN PROGRESS"
+            color = YELLOW
+
+        elif shot_pending:
+
+            text = "GET READY"
+            color = YELLOW
+
+        else:
+
+            text = "YOUR TURN"
+            color = STATUS_GREEN
+
+    else:
+
+        if shot_in_progress:
+
+            text = "AI SHOOTING"
+            color = STATUS_BLUE
+
+        elif shot_pending:
+
+            text = "AI IS THINKING..."
+            color = STATUS_BLUE
+
+        else:
+
+            text = "AI TURN"
+            color = STATUS_BLUE
+
+    text_surface = font.render(
+        text,
+        True,
+        color
+    )
+
+    padding_x = 14
+    padding_y = 6
+
+    rect = text_surface.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            TABLE_Y + 585
+        )
+    )
+
+    background_rect = pygame.Rect(
+        rect.left - padding_x,
+        rect.top - padding_y,
+        rect.width + padding_x * 2,
+        rect.height + padding_y * 2
+    )
+
+    surface = pygame.Surface(
+        background_rect.size,
+        pygame.SRCALPHA
+    )
+
+    surface.fill(
+        (5, 5, 7, 210)
+    )
+
+    pygame.draw.rect(
+        surface,
+        color,
+        surface.get_rect(),
+        1,
+        border_radius=8
+    )
+
+    screen.blit(
+        surface,
+        background_rect
+    )
+
+    screen.blit(
+        text_surface,
+        rect
+    )
+
+
+# =========================================================
 # HUD
 # =========================================================
 
 def draw_hud():
 
-    font = pygame.font.SysFont(
+    # =====================================================
+    # TOP BAR
+    # =====================================================
+
+    hud_height = 78
+
+    hud = pygame.Surface(
+        (
+            WINDOW_WIDTH,
+            hud_height
+        ),
+        pygame.SRCALPHA
+    )
+
+    hud.fill(
+        (
+            HUD_BACKGROUND[0],
+            HUD_BACKGROUND[1],
+            HUD_BACKGROUND[2],
+            238
+        )
+    )
+
+    screen.blit(
+        hud,
+        (0, 0)
+    )
+
+    pygame.draw.line(
+        screen,
+        HUD_BORDER,
+        (
+            0,
+            hud_height - 1
+        ),
+        (
+            WINDOW_WIDTH,
+            hud_height - 1
+        ),
+        1
+    )
+
+    player_font = pygame.font.SysFont(
         "arial",
-        20,
+        19,
         bold=True
     )
 
     small_font = pygame.font.SysFont(
         "arial",
-        17
+        12,
+        bold=True
     )
 
-    # -----------------------------------------------------
-    # CURRENT PLAYER
-    # -----------------------------------------------------
+    normal_font = pygame.font.SysFont(
+        "arial",
+        12
+    )
+
+    # =====================================================
+    # PLAYER
+    # =====================================================
+
+    player_x = 25
 
     if current_player == PLAYER_HUMAN:
 
-        player_text = "YOUR TURN"
+        player_color = YELLOW
+        player_status = "YOUR TURN"
 
     else:
 
-        player_text = "AI TURN"
+        player_color = TEXT_SECONDARY
+        player_status = "WAITING"
 
-    text = font.render(
-        player_text,
+    player_title = player_font.render(
+        "PLAYER",
         True,
-        WHITE
+        TEXT_PRIMARY
+    )
+
+    player_status_surface = small_font.render(
+        player_status,
+        True,
+        player_color
     )
 
     screen.blit(
-        text,
+        player_title,
         (
-            25,
-            20
-        )
-    )
-
-    # -----------------------------------------------------
-    # GROUPS
-    # -----------------------------------------------------
-
-    if player_group is None:
-
-        player_group_text = "Player: Open"
-
-    else:
-
-        player_group_text = (
-            f"Player: "
-            f"{player_group.capitalize()}"
-        )
-
-    if ai_group is None:
-
-        ai_group_text = "AI: Open"
-
-    else:
-
-        ai_group_text = (
-            f"AI: "
-            f"{ai_group.capitalize()}"
-        )
-
-    player_group_surface = small_font.render(
-        player_group_text,
-        True,
-        GREY
-    )
-
-    ai_group_surface = small_font.render(
-        ai_group_text,
-        True,
-        GREY
-    )
-
-    screen.blit(
-        player_group_surface,
-        (
-            25,
-            48
+            player_x,
+            13
         )
     )
 
     screen.blit(
-        ai_group_surface,
+        player_status_surface,
         (
-            25,
-            70
+            player_x + 1,
+            40
         )
     )
 
-    # -----------------------------------------------------
-    # HUMAN POWER
-    # -----------------------------------------------------
+    draw_group_badge(
+        player_x,
+        57,
+        player_group
+    )
+
+    # =====================================================
+    # CENTER GROUP
+    # =====================================================
+
+    center_x = WINDOW_WIDTH // 2
+
+    your_balls = normal_font.render(
+        "YOUR BALLS",
+        True,
+        TEXT_SECONDARY
+    )
+
+    your_balls_rect = your_balls.get_rect(
+        center=(
+            center_x,
+            18
+        )
+    )
+
+    screen.blit(
+        your_balls,
+        your_balls_rect
+    )
+
+    if player_group == "solid":
+
+        group_text = "SOLIDS"
+        group_color = SOLID_COLOR
+
+    elif player_group == "stripe":
+
+        group_text = "STRIPES"
+        group_color = STRIPE_COLOR
+
+    else:
+
+        group_text = "OPEN TABLE"
+        group_color = TEXT_PRIMARY
+
+    group_surface = player_font.render(
+        group_text,
+        True,
+        group_color
+    )
+
+    group_rect = group_surface.get_rect(
+        center=(
+            center_x,
+            43
+        )
+    )
+
+    screen.blit(
+        group_surface,
+        group_rect
+    )
+
+    if player_group is not None:
+
+        count_text = (
+            f"{len(remaining_numbers(player_group))}"
+            f" BALLS REMAINING"
+        )
+
+    else:
+
+        count_text = "CHOOSE YOUR GROUP"
+
+    count_surface = normal_font.render(
+        count_text,
+        True,
+        TEXT_SECONDARY
+    )
+
+    count_rect = count_surface.get_rect(
+        center=(
+            center_x,
+            64
+        )
+    )
+
+    screen.blit(
+        count_surface,
+        count_rect
+    )
+
+    # =====================================================
+    # AI
+    # =====================================================
+
+    right_x = WINDOW_WIDTH - 25
+
+    if current_player == PLAYER_AI:
+
+        ai_color = YELLOW
+        ai_status = "YOUR OPPONENT'S TURN"
+
+    else:
+
+        ai_color = TEXT_SECONDARY
+        ai_status = "WAITING"
+
+    ai_title = player_font.render(
+        "AI",
+        True,
+        TEXT_PRIMARY
+    )
+
+    ai_status_surface = small_font.render(
+        ai_status,
+        True,
+        ai_color
+    )
+
+    ai_title_rect = ai_title.get_rect(
+        top=13,
+        right=right_x
+    )
+
+    ai_status_rect = ai_status_surface.get_rect(
+        top=40,
+        right=right_x
+    )
+
+    screen.blit(
+        ai_title,
+        ai_title_rect
+    )
+
+    screen.blit(
+        ai_status_surface,
+        ai_status_rect
+    )
+
+    draw_group_badge(
+        right_x,
+        57,
+        ai_group,
+        align="right"
+    )
+
+    # =====================================================
+    # BOTTOM POWER PANEL
+    # =====================================================
 
     if current_player == PLAYER_HUMAN:
 
-        power_text = (
-            f"Power: "
-            f"{human_power:.1f}"
+        panel_width = 250
+        panel_height = 64
+
+        panel_x = 22
+        panel_y = WINDOW_HEIGHT - panel_height - 18
+
+        panel_rect = pygame.Rect(
+            panel_x,
+            panel_y,
+            panel_width,
+            panel_height
         )
 
-        power_surface = small_font.render(
+        draw_panel(
+            panel_rect,
+            fill=(8, 8, 10, 225),
+            border=(55, 55, 60),
+            radius=9
+        )
+
+        power_font = pygame.font.SysFont(
+            "arial",
+            12,
+            bold=True
+        )
+
+        power_text = power_font.render(
+            f"POWER  {human_power:.1f}",
+            True,
+            TEXT_PRIMARY
+        )
+
+        screen.blit(
             power_text,
-            True,
-            GREY
-        )
-
-        screen.blit(
-            power_surface,
             (
-                WINDOW_WIDTH - 140,
-                20
+                panel_x + 12,
+                panel_y + 10
             )
         )
 
-        controls = small_font.render(
-            "Mouse: aim   Click: shoot   Wheel: power",
+        # -------------------------------------------------
+        # POWER BAR
+        # -------------------------------------------------
+
+        bar_x = panel_x + 12
+        bar_y = panel_y + 33
+
+        bar_width = panel_width - 24
+        bar_height = 9
+
+        pygame.draw.rect(
+            screen,
+            (30, 30, 34),
+            (
+                bar_x,
+                bar_y,
+                bar_width,
+                bar_height
+            ),
+            border_radius=4
+        )
+
+        progress = (
+            human_power -
+            HUMAN_MIN_POWER
+        ) / (
+            HUMAN_MAX_POWER -
+            HUMAN_MIN_POWER
+        )
+
+        progress = max(
+            0.0,
+            min(
+                1.0,
+                progress
+            )
+        )
+
+        fill_width = int(
+            (bar_width - 4) *
+            progress
+        )
+
+        if fill_width > 0:
+
+            pygame.draw.rect(
+                screen,
+                YELLOW,
+                (
+                    bar_x + 2,
+                    bar_y + 2,
+                    fill_width,
+                    bar_height - 4
+                ),
+                border_radius=3
+            )
+
+        # -------------------------------------------------
+        # POWER CONTROLS
+        # -------------------------------------------------
+
+        controls = pygame.font.SysFont(
+            "arial",
+            10
+        )
+
+        controls_surface = controls.render(
+            "WHEEL  POWER",
             True,
-            GREY
+            TEXT_SECONDARY
+        )
+
+        controls_rect = controls_surface.get_rect(
+            bottomright=(
+                panel_x + panel_width - 10,
+                panel_y + panel_height - 7
+            )
         )
 
         screen.blit(
-            controls,
-            (
-                WINDOW_WIDTH - 330,
-                WINDOW_HEIGHT - 30
-            )
+            controls_surface,
+            controls_rect
         )
+
+    # =====================================================
+    # BOTTOM RIGHT CONTROLS
+    # =====================================================
+
+    controls_font = pygame.font.SysFont(
+        "arial",
+        11
+    )
+
+    controls = controls_font.render(
+        "MOUSE  AIM     CLICK  SHOOT     ESC  PAUSE",
+        True,
+        TEXT_SECONDARY
+    )
+
+    controls_rect = controls.get_rect(
+        bottomright=(
+            WINDOW_WIDTH - 22,
+            WINDOW_HEIGHT - 24
+        )
+    )
+
+    screen.blit(
+        controls,
+        controls_rect
+    )
 
 
 # =========================================================
@@ -1466,15 +2091,14 @@ def draw_human_aim():
 
 def draw_ai_prediction():
 
+    if paused:
+        return
+
     if not shot_pending:
         return
 
     if current_shot is None:
         return
-
-    # -----------------------------------------------------
-    # AIM LINE
-    # -----------------------------------------------------
 
     aim_point = current_shot.get(
         "aim_point"
@@ -1506,10 +2130,6 @@ def draw_ai_prediction():
             BALL_RADIUS,
             1
         )
-
-    # -----------------------------------------------------
-    # TARGET
-    # -----------------------------------------------------
 
     target = current_shot.get(
         "target"
@@ -1548,10 +2168,6 @@ def draw_ai_prediction():
             1
         )
 
-        # -------------------------------------------------
-        # CONTACT POINT
-        # -------------------------------------------------
-
         contact = current_shot.get(
             "contact"
         )
@@ -1567,10 +2183,6 @@ def draw_ai_prediction():
                 ),
                 3
             )
-
-    # -----------------------------------------------------
-    # BANK
-    # -----------------------------------------------------
 
     bank_point = current_shot.get(
         "bank_point"
@@ -1772,42 +2384,22 @@ def reset_game():
 
     global human_power
 
-    # -----------------------------------------------------
-    # RETURN TO GAME
-    # -----------------------------------------------------
-
     waiting_for_start = False
 
     paused = False
-
-    # -----------------------------------------------------
-    # MENU STATE
-    # -----------------------------------------------------
 
     menu_selected = 0
     game_over_selected = 0
     pause_selected = 0
 
-    # -----------------------------------------------------
-    # GAME OVER STATE
-    # -----------------------------------------------------
-
     game_over = False
     game_won = False
     game_lost = False
-
-    # -----------------------------------------------------
-    # PLAYER STATE
-    # -----------------------------------------------------
 
     current_player = PLAYER_HUMAN
 
     player_group = None
     ai_group = None
-
-    # -----------------------------------------------------
-    # SHOT STATE
-    # -----------------------------------------------------
 
     shot_pending = False
     shot_preview_timer = 0
@@ -1820,15 +2412,7 @@ def reset_game():
 
     human_shot_pending = False
 
-    # -----------------------------------------------------
-    # HUMAN POWER
-    # -----------------------------------------------------
-
     human_power = 10.0
-
-    # -----------------------------------------------------
-    # RESET CUE BALL
-    # -----------------------------------------------------
 
     cue_ball.active = True
 
@@ -1846,10 +2430,6 @@ def reset_game():
     cue_ball.vy = 0
 
     cue_ball.first_hit_number = None
-
-    # -----------------------------------------------------
-    # RESET OBJECT BALLS
-    # -----------------------------------------------------
 
     for number, position in zip(
         range(1, 16),
@@ -1874,10 +2454,6 @@ def reset_game():
                 ball.first_hit_number = None
 
                 break
-
-    # -----------------------------------------------------
-    # RESET AI
-    # -----------------------------------------------------
 
     ai = PoolAI()
 
@@ -1904,19 +2480,11 @@ def process_shot_result(
     global shot_shooter
     global shot_pocketed
 
-    # -----------------------------------------------------
-    # OBJECT BALLS
-    # -----------------------------------------------------
-
     object_balls = [
         ball
         for ball in pocketed
         if not ball.is_cue
     ]
-
-    # -----------------------------------------------------
-    # SCRATCH
-    # -----------------------------------------------------
 
     cue_pocketed = any(
         ball.is_cue
@@ -1937,20 +2505,12 @@ def process_shot_result(
 
         return
 
-    # -----------------------------------------------------
-    # FIRST HIT
-    # -----------------------------------------------------
-
     first_hit = cue_ball.first_hit_number
 
     legal_first_hit = first_hit_is_legal(
         first_hit,
         shooter
     )
-
-    # -----------------------------------------------------
-    # NO FIRST HIT = FOUL
-    # -----------------------------------------------------
 
     if first_hit is None:
 
@@ -1964,10 +2524,6 @@ def process_shot_result(
 
         return
 
-    # -----------------------------------------------------
-    # ILLEGAL FIRST HIT = FOUL
-    # -----------------------------------------------------
-
     if not legal_first_hit:
 
         human_shot_pending = False
@@ -1980,10 +2536,6 @@ def process_shot_result(
 
         return
 
-    # -----------------------------------------------------
-    # NOTHING POCKETED
-    # -----------------------------------------------------
-
     if not object_balls:
 
         human_shot_pending = False
@@ -1995,10 +2547,6 @@ def process_shot_result(
         switch_player()
 
         return
-
-    # -----------------------------------------------------
-    # BLACK BALL
-    # -----------------------------------------------------
 
     black_pocketed = any(
         ball.number == 8
@@ -2047,10 +2595,6 @@ def process_shot_result(
 
         return
 
-    # -----------------------------------------------------
-    # GROUP ASSIGNMENT
-    # -----------------------------------------------------
-
     if (
         player_group is None
         and ai_group is None
@@ -2098,10 +2642,6 @@ def process_shot_result(
 
                     player_group = "solid"
 
-    # -----------------------------------------------------
-    # DETERMINE WHETHER SHOOTER POCKETED OWN BALL
-    # -----------------------------------------------------
-
     shooter_group = (
         player_group
         if shooter == PLAYER_HUMAN
@@ -2125,10 +2665,6 @@ def process_shot_result(
             valid_pocketed = True
 
             break
-
-    # -----------------------------------------------------
-    # CONTINUE OR CHANGE TURN
-    # -----------------------------------------------------
 
     if not valid_pocketed:
 
@@ -2533,6 +3069,8 @@ while running:
     if not waiting_for_start:
 
         draw_hud()
+
+        draw_game_status()
 
     # -----------------------------------------------------
     # START SCREEN
