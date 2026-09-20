@@ -229,10 +229,6 @@ def register_font(filename):
 
         _registered_fonts.append(path)
 
-        print(
-            f"Font loaded: {filename}"
-        )
-
         return True
 
     except Exception as error:
