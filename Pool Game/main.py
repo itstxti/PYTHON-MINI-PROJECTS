@@ -115,6 +115,8 @@ SETTINGS_FILL = (135, 135, 140)
 table = Table(
     screen
 )
+
+
 # =========================================================
 # BALL COLORS
 # =========================================================
@@ -145,8 +147,8 @@ BALL_COLORS = {
 balls = []
 
 cue_ball = Ball(
-    TABLE_X + TABLE_WIDTH * 0.25,
-    TABLE_Y + TABLE_HEIGHT / 2,
+    table.table_x + TABLE_WIDTH * 0.25,
+    table.table_y + TABLE_HEIGHT / 2,
     (245, 245, 245),
     is_cue=True
 )
@@ -159,12 +161,12 @@ balls.append(cue_ball)
 # =========================================================
 
 rack_x = (
-    TABLE_X +
+    table.table_x +
     TABLE_WIDTH * 0.68
 )
 
 rack_y = (
-    TABLE_Y +
+    table.table_y +
     TABLE_HEIGHT / 2
 )
 
@@ -1550,6 +1552,18 @@ def toggle_fullscreen():
     global fullscreen_enabled
     global screen
     global table
+    global _aim_prediction_cache
+
+    # -----------------------------------------------------
+    # SAVE OLD TABLE POSITION
+    # -----------------------------------------------------
+
+    old_table_x = table.table_x
+    old_table_y = table.table_y
+
+    # -----------------------------------------------------
+    # TOGGLE DISPLAY
+    # -----------------------------------------------------
 
     fullscreen_enabled = not fullscreen_enabled
 
@@ -1574,9 +1588,39 @@ def toggle_fullscreen():
             )
         )
 
+    # -----------------------------------------------------
+    # UPDATE TABLE POSITION
+    # -----------------------------------------------------
+
     table.update_position(
         screen
     )
+
+    # -----------------------------------------------------
+    # MOVE ALL BALLS WITH THE TABLE
+    # -----------------------------------------------------
+
+    offset_x = (
+        table.table_x -
+        old_table_x
+    )
+
+    offset_y = (
+        table.table_y -
+        old_table_y
+    )
+
+    for ball in balls:
+
+        ball.x += offset_x
+        ball.y += offset_y
+
+    # -----------------------------------------------------
+    # INVALIDATE AIM PREDICTION
+    # -----------------------------------------------------
+
+    _aim_prediction_cache = None
+
 
 def adjust_setting(direction):
 
@@ -2590,7 +2634,7 @@ def draw_hud():
             3 + human_power -
             HUMAN_MIN_POWER
         ) / (
-            3+ HUMAN_MAX_POWER -
+            3 + HUMAN_MAX_POWER -
             HUMAN_MIN_POWER
         )
 
@@ -2656,13 +2700,13 @@ def draw_hud():
                     screen,
                     (0, 0, 0),
                     (
-                    bar_x + 1 + fill_width - 17,
-                    bar_y + 1,
-                    15,
-                    bar_height - 2
+                        bar_x + 1 + fill_width - 17,
+                        bar_y + 1,
+                        15,
+                        bar_height - 2
                     ),
                     border_radius=2
-                )  
+                )
 
                 # White tip
                 pygame.draw.rect(
@@ -2676,8 +2720,6 @@ def draw_hud():
                     ),
                     border_radius=2
                 )
-
-                  
 
         # =====================================================
         # POWER CONTROLS
@@ -2732,6 +2774,7 @@ def draw_hud():
         controls,
         controls_rect
     )
+
 
 # =========================================================
 # HUMAN AIM PREVIEW
@@ -2803,23 +2846,23 @@ def draw_human_aim():
     ):
 
         left = (
-            TABLE_X +
+            table.table_x +
             ball_radius
         )
 
         right = (
-            TABLE_X +
+            table.table_x +
             TABLE_WIDTH -
             ball_radius
         )
 
         top = (
-            TABLE_Y +
+            table.table_y +
             ball_radius
         )
 
         bottom = (
-            TABLE_Y +
+            table.table_y +
             TABLE_HEIGHT -
             ball_radius
         )
@@ -3127,6 +3170,10 @@ def draw_human_aim():
 
     target_dx /= target_length
     target_dy /= target_length
+
+    # =====================================================
+    # TARGET BALL TRAJECTORY
+    # =====================================================
 
     target_table_distance = ray_box_distance(
         hit_ball.x,
@@ -3466,12 +3513,12 @@ def respawn_cue_ball():
     cue_ball.active = True
 
     cue_ball.x = (
-        TABLE_X +
+        table.table_x +
         TABLE_WIDTH * 0.25
     )
 
     cue_ball.y = (
-        TABLE_Y +
+        table.table_y +
         TABLE_HEIGHT / 2
     )
 
@@ -3561,15 +3608,27 @@ def reset_game():
 
     _aim_prediction_cache = None
 
+    # -----------------------------------------------------
+    # MAKE SURE TABLE POSITION IS CURRENT
+    # -----------------------------------------------------
+
+    table.update_position(
+        screen
+    )
+
+    # -----------------------------------------------------
+    # CUE BALL
+    # -----------------------------------------------------
+
     cue_ball.active = True
 
     cue_ball.x = (
-        TABLE_X +
+        table.table_x +
         TABLE_WIDTH * 0.25
     )
 
     cue_ball.y = (
-        TABLE_Y +
+        table.table_y +
         TABLE_HEIGHT / 2
     )
 
@@ -3577,6 +3636,46 @@ def reset_game():
     cue_ball.vy = 0
 
     cue_ball.first_hit_number = None
+
+    # -----------------------------------------------------
+    # RACK
+    # -----------------------------------------------------
+
+    rack_x = (
+        table.table_x +
+        TABLE_WIDTH * 0.68
+    )
+
+    rack_y = (
+        table.table_y +
+        TABLE_HEIGHT / 2
+    )
+
+    rack_positions = []
+
+    for row in range(5):
+
+        for column in range(row + 1):
+
+            x = (
+                rack_x +
+                row * spacing * 0.866
+            )
+
+            y = (
+                rack_y +
+                (
+                    column -
+                    row / 2
+                ) * spacing
+            )
+
+            rack_positions.append(
+                (
+                    x,
+                    y
+                )
+            )
 
     for number, position in zip(
         RACK_ORDER,
