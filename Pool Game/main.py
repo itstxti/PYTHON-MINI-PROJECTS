@@ -167,8 +167,28 @@ for row in range(5):
         )
 
 
+# Orden de las bolas dentro del rack.
+#
+#                  1
+#               10   2
+#             3   8   11
+#          12   4   9   5
+#        6   13   7   14   15
+#
+# La bola 8 queda en el centro y las bolas
+# sólidas/rayadas quedan mezcladas.
+
+RACK_ORDER = [
+    1,
+    10, 2,
+    3, 8, 11,
+    12, 4, 9, 5,
+    6, 13, 7, 14, 15
+]
+
+
 for number, position in zip(
-    range(1, 16),
+    RACK_ORDER,
     rack_positions
 ):
 
@@ -187,7 +207,6 @@ for number, position in zip(
     )
 
     balls.append(ball)
-
 
 # =========================================================
 # AI
