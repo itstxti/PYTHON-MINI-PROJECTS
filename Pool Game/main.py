@@ -181,9 +181,23 @@ ai = PoolAI()
 
 waiting_for_start = True
 
+menu_selected = 0
+
+menu_options = [
+    "PLAY",
+    "QUIT"
+]
+
 game_over = False
 game_won = False
 game_lost = False
+
+game_over_selected = 0
+
+game_over_options = [
+    "PLAY AGAIN",
+    "QUIT"
+]
 
 
 # =========================================================
@@ -405,7 +419,7 @@ def switch_player():
 
 
 # =========================================================
-# START SCREEN
+# START MENU
 # =========================================================
 
 def draw_start_screen():
@@ -429,13 +443,14 @@ def draw_start_screen():
 
     title_font = pygame.font.SysFont(
         "arial",
-        46,
+        56,
         bold=True
     )
 
-    text_font = pygame.font.SysFont(
+    option_font = pygame.font.SysFont(
         "arial",
-        24
+        28,
+        bold=True
     )
 
     title = title_font.render(
@@ -444,23 +459,10 @@ def draw_start_screen():
         WHITE
     )
 
-    subtitle = text_font.render(
-        "Pulsa ENTER para comenzar",
-        True,
-        GREY
-    )
-
     title_rect = title.get_rect(
         center=(
             WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 - 35
-        )
-    )
-
-    subtitle_rect = subtitle.get_rect(
-        center=(
-            WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 + 30
+            WINDOW_HEIGHT // 2 - 110
         )
     )
 
@@ -469,14 +471,40 @@ def draw_start_screen():
         title_rect
     )
 
-    screen.blit(
-        subtitle,
-        subtitle_rect
-    )
+    for index, option in enumerate(
+        menu_options
+    ):
+
+        if index == menu_selected:
+
+            color = YELLOW
+
+        else:
+
+            color = GREY
+
+        text = option_font.render(
+            option,
+            True,
+            color
+        )
+
+        text_rect = text.get_rect(
+            center=(
+                WINDOW_WIDTH // 2,
+                WINDOW_HEIGHT // 2 +
+                index * 55
+            )
+        )
+
+        screen.blit(
+            text,
+            text_rect
+        )
 
 
 # =========================================================
-# GAME OVER SCREEN
+# GAME OVER MENU
 # =========================================================
 
 def draw_game_over():
@@ -490,7 +518,7 @@ def draw_game_over():
     )
 
     overlay.fill(
-        (0, 0, 0, 160)
+        (0, 0, 0, 175)
     )
 
     screen.blit(
@@ -498,55 +526,112 @@ def draw_game_over():
         (0, 0)
     )
 
-    font = pygame.font.SysFont(
+    title_font = pygame.font.SysFont(
         "arial",
-        50,
+        52,
         bold=True
     )
 
-    small_font = pygame.font.SysFont(
+    option_font = pygame.font.SysFont(
         "arial",
-        22
+        25,
+        bold=True
     )
+
+    hint_font = pygame.font.SysFont(
+        "arial",
+        17
+    )
+
+    # -----------------------------------------------------
+    # RESULT
+    # -----------------------------------------------------
 
     if game_won:
 
         message = "YOU WIN"
 
+        message_color = YELLOW
+
     else:
 
         message = "AI WINS"
 
-    text = font.render(
+        message_color = RED
+
+    title = title_font.render(
         message,
         True,
-        WHITE
+        message_color
     )
 
-    restart = small_font.render(
-        "Pulsa ESC para salir",
+    title_rect = title.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            WINDOW_HEIGHT // 2 - 80
+        )
+    )
+
+    screen.blit(
+        title,
+        title_rect
+    )
+
+    # -----------------------------------------------------
+    # OPTIONS
+    # -----------------------------------------------------
+
+    for index, option in enumerate(
+        game_over_options
+    ):
+
+        if index == game_over_selected:
+
+            color = YELLOW
+
+        else:
+
+            color = GREY
+
+        text = option_font.render(
+            option,
+            True,
+            color
+        )
+
+        text_rect = text.get_rect(
+            center=(
+                WINDOW_WIDTH // 2,
+                WINDOW_HEIGHT // 2 +
+                index * 50
+            )
+        )
+
+        screen.blit(
+            text,
+            text_rect
+        )
+
+    # -----------------------------------------------------
+    # HINT
+    # -----------------------------------------------------
+
+    hint = hint_font.render(
+        "Use ↑ ↓ and ENTER",
         True,
         GREY
     )
 
-    screen.blit(
-        text,
-        text.get_rect(
-            center=(
-                WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT // 2 - 25
-            )
+    hint_rect = hint.get_rect(
+        center=(
+            WINDOW_WIDTH // 2,
+            WINDOW_HEIGHT // 2 + 120
         )
     )
 
     screen.blit(
-        restart,
-        restart.get_rect(
-            center=(
-                WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT // 2 + 40
-            )
-        )
+        hint,
+        hint_rect
     )
 
 
@@ -880,8 +965,6 @@ def draw_human_aim():
         if ball.is_cue:
             continue
 
-        # La colisión ocurre cuando la distancia entre
-        # CENTROS es la suma de ambos radios.
         collision_radius = (
             cue_ball.radius +
             ball.radius
@@ -1023,8 +1106,6 @@ def draw_human_aim():
     if not hit_first:
         return
 
-    # La posición de white_end es el CENTRO de la blanca
-    # en el instante del contacto, es decir, la bola fantasma.
     ghost_x = white_end_x
     ghost_y = white_end_y
 
@@ -1425,8 +1506,6 @@ def start_shot(shooter):
     shot_shooter = shooter
     shot_pocketed = []
 
-    # Make absolutely sure the first-hit state
-    # belongs only to this shot.
     cue_ball.first_hit_number = None
 
 
@@ -1513,6 +1592,147 @@ def respawn_cue_ball():
 
     cue_ball.first_hit_number = None
 
+
+# =========================================================
+# RESET GAME
+# =========================================================
+
+def reset_game():
+
+    global ai
+
+    global waiting_for_start
+
+    global menu_selected
+
+    global game_over
+    global game_won
+    global game_lost
+
+    global game_over_selected
+
+    global current_player
+
+    global player_group
+    global ai_group
+
+    global shot_pending
+    global shot_preview_timer
+    global current_shot
+
+    global shot_in_progress
+    global shot_shooter
+    global shot_pocketed
+
+    global human_shot_pending
+
+    global human_power
+
+    # -----------------------------------------------------
+    # RETURN TO GAME
+    # -----------------------------------------------------
+
+    waiting_for_start = False
+
+    # -----------------------------------------------------
+    # MENU STATE
+    # -----------------------------------------------------
+
+    menu_selected = 0
+    game_over_selected = 0
+
+    # -----------------------------------------------------
+    # GAME OVER STATE
+    # -----------------------------------------------------
+
+    game_over = False
+    game_won = False
+    game_lost = False
+
+    # -----------------------------------------------------
+    # PLAYER STATE
+    # -----------------------------------------------------
+
+    current_player = PLAYER_HUMAN
+
+    player_group = None
+    ai_group = None
+
+    # -----------------------------------------------------
+    # SHOT STATE
+    # -----------------------------------------------------
+
+    shot_pending = False
+    shot_preview_timer = 0
+
+    current_shot = None
+
+    shot_in_progress = False
+    shot_shooter = None
+    shot_pocketed = []
+
+    human_shot_pending = False
+
+    # -----------------------------------------------------
+    # HUMAN POWER
+    # -----------------------------------------------------
+
+    human_power = 10.0
+
+    # -----------------------------------------------------
+    # RESET CUE BALL
+    # -----------------------------------------------------
+
+    cue_ball.active = True
+
+    cue_ball.x = (
+        TABLE_X +
+        TABLE_WIDTH * 0.25
+    )
+
+    cue_ball.y = (
+        TABLE_Y +
+        TABLE_HEIGHT / 2
+    )
+
+    cue_ball.vx = 0
+    cue_ball.vy = 0
+
+    cue_ball.first_hit_number = None
+
+    # -----------------------------------------------------
+    # RESET OBJECT BALLS
+    # -----------------------------------------------------
+
+    for number, position in zip(
+        range(1, 16),
+        rack_positions
+    ):
+
+        for ball in balls:
+
+            if (
+                not ball.is_cue
+                and ball.number == number
+            ):
+
+                ball.active = True
+
+                ball.x = position[0]
+                ball.y = position[1]
+
+                ball.vx = 0
+                ball.vy = 0
+
+                ball.first_hit_number = None
+
+                break
+
+    # -----------------------------------------------------
+    # RESET AI
+    # -----------------------------------------------------
+
+    ai = PoolAI()
 
 # =========================================================
 # PROCESS SHOT RESULT
@@ -1645,9 +1865,6 @@ def process_shot_result(
             else ai_group
         )
 
-        # The first-hit validation above guarantees
-        # that the shooter had cleared their group
-        # before hitting the 8.
         if shooter_group is not None and all_group_cleared(
             shooter_group
         ):
@@ -1769,8 +1986,6 @@ def process_shot_result(
 
         switch_player()
 
-    # Otherwise the same player continues.
-
     human_shot_pending = False
 
     shot_in_progress = False
@@ -1891,15 +2106,70 @@ while running:
         elif event.type == pygame.KEYDOWN:
 
             # ---------------------------------------------
-            # START
+            # START MENU
             # ---------------------------------------------
 
-            if (
-                event.key == pygame.K_RETURN
-                and waiting_for_start
-            ):
+            if waiting_for_start:
 
-                waiting_for_start = False
+                if event.key == pygame.K_UP:
+
+                    menu_selected = (
+                        menu_selected - 1
+                    ) % len(menu_options)
+
+                elif event.key == pygame.K_DOWN:
+
+                    menu_selected = (
+                        menu_selected + 1
+                    ) % len(menu_options)
+
+                elif event.key == pygame.K_RETURN:
+
+                    if menu_options[
+                        menu_selected
+                    ] == "PLAY":
+
+                        waiting_for_start = False
+
+                    elif menu_options[
+                        menu_selected
+                    ] == "QUIT":
+
+                        running = False
+
+            # ---------------------------------------------
+            # GAME OVER MENU
+            # ---------------------------------------------
+
+            elif game_over:
+
+                if event.key == pygame.K_UP:
+
+                    game_over_selected = (
+                        game_over_selected - 1
+                    ) % len(game_over_options)
+
+                elif event.key == pygame.K_DOWN:
+
+                    game_over_selected = (
+                        game_over_selected + 1
+                    ) % len(game_over_options)
+
+                elif event.key == pygame.K_RETURN:
+
+                    if game_over_options[
+                        game_over_selected
+                    ] == "QUIT":
+
+                        running = False
+
+                    elif game_over_options[
+                        game_over_selected
+                    ] == "PLAY AGAIN":
+
+                        reset_game()
+                        
+                        pass
 
             # ---------------------------------------------
             # EXIT
