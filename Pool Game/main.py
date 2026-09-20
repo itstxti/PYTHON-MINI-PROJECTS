@@ -208,6 +208,7 @@ for number, position in zip(
 
     balls.append(ball)
 
+
 # =========================================================
 # AI
 # =========================================================
@@ -296,6 +297,96 @@ HUMAN_MIN_POWER = 4.0
 HUMAN_MAX_POWER = 18.0
 
 human_power = 10.0
+
+
+# =========================================================
+# HUMAN AIM PREDICTION CACHE
+# =========================================================
+
+_aim_prediction_cache = None
+
+
+def predict_cue_path(angle):
+
+    global _aim_prediction_cache
+
+    state_key = (
+        round(angle, 4),
+        round(human_power, 3),
+        tuple(
+            (
+                ball.active,
+                round(ball.x, 3),
+                round(ball.y, 3)
+            )
+            for ball in balls
+        )
+    )
+
+    if (
+        _aim_prediction_cache is not None
+        and _aim_prediction_cache[0] == state_key
+    ):
+        return _aim_prediction_cache[1]
+
+    simulated_balls = [
+        ball.clone()
+        for ball in balls
+    ]
+
+    simulated_cue = next(
+        ball
+        for ball in simulated_balls
+        if ball.is_cue
+    )
+
+    simulated_cue.shoot(
+        angle,
+        human_power
+    )
+
+    cue_path = [
+        (
+            simulated_cue.x,
+            simulated_cue.y
+        )
+    ]
+
+    for _ in range(500):
+
+        update_physics(
+            simulated_balls,
+            table
+        )
+
+        cue_path.append(
+            (
+                simulated_cue.x,
+                simulated_cue.y
+            )
+        )
+
+        if not simulated_cue.active:
+            break
+
+        if all(
+            ball.speed == 0
+            for ball in simulated_balls
+            if ball.active
+        ):
+            break
+
+    prediction = (
+        cue_path,
+        simulated_cue.active
+    )
+
+    _aim_prediction_cache = (
+        state_key,
+        prediction
+    )
+
+    return prediction
 
 
 # =========================================================
@@ -1795,6 +1886,11 @@ def draw_human_aim():
     dx /= length
     dy /= length
 
+    angle = math.atan2(
+        dy,
+        dx
+    )
+
     # =====================================================
     # GEOMETRY HELPERS
     # =====================================================
@@ -2023,64 +2119,101 @@ def draw_human_aim():
         and nearest_distance < table_distance
     )
 
-    if hit_first:
-        white_line_distance = nearest_distance
-    else:
-        white_line_distance = table_distance
-
-    white_end_x = (
-        cue_ball.x +
-        dx * white_line_distance
-    )
-
-    white_end_y = (
-        cue_ball.y +
-        dy * white_line_distance
-    )
-
     # =====================================================
-    # INCOMING WHITE-BALL TRAJECTORY
+    # PREDICTED CUE-BALL PATH
     # =====================================================
+    #
+    # La línea azul usa la misma física del disparo real:
+    # fricción, bandas, colisiones y potencia actual. Así
+    # marca el recorrido completo de la bola blanca y su
+    # posición final aproximada.
 
-    cue_line_start_x = (
-        cue_ball.x +
-        dx * (cue_ball.radius + 1)
+    predicted_cue_path, predicted_cue_active = predict_cue_path(
+        angle
     )
 
-    cue_line_start_y = (
-        cue_ball.y +
-        dy * (cue_ball.radius + 1)
-    )
+    if len(predicted_cue_path) >= 2:
 
-    pygame.draw.line(
-        screen,
-        WHITE,
-        (
-            int(cue_line_start_x),
-            int(cue_line_start_y)
-        ),
-        (
-            int(white_end_x),
-            int(white_end_y)
-        ),
-        2
-    )
+        cue_path_color = (
+            120,
+            220,
+            255
+        )
 
-    pygame.draw.circle(
-        screen,
-        WHITE,
-        (
-            int(white_end_x),
-            int(white_end_y)
-        ),
-        3
-    )
+        pygame.draw.lines(
+            screen,
+            cue_path_color,
+            False,
+            [
+                (
+                    int(point_x),
+                    int(point_y)
+                )
+                for point_x, point_y in predicted_cue_path
+            ],
+            2
+        )
+
+        final_x, final_y = predicted_cue_path[-1]
+
+        if predicted_cue_active:
+
+            pygame.draw.circle(
+                screen,
+                cue_path_color,
+                (
+                    int(final_x),
+                    int(final_y)
+                ),
+                4
+            )
+
+        else:
+
+            pygame.draw.line(
+                screen,
+                RED,
+                (
+                    int(final_x - 5),
+                    int(final_y - 5)
+                ),
+                (
+                    int(final_x + 5),
+                    int(final_y + 5)
+                ),
+                2
+            )
+
+            pygame.draw.line(
+                screen,
+                RED,
+                (
+                    int(final_x + 5),
+                    int(final_y - 5)
+                ),
+                (
+                    int(final_x - 5),
+                    int(final_y + 5)
+                ),
+                2
+            )
 
     if not hit_first:
         return
 
-    ghost_x = white_end_x
-    ghost_y = white_end_y
+    # =====================================================
+    # GHOST BALL
+    # =====================================================
+
+    ghost_x = (
+        cue_ball.x +
+        dx * nearest_distance
+    )
+
+    ghost_y = (
+        cue_ball.y +
+        dy * nearest_distance
+    )
 
     pygame.draw.circle(
         screen,
@@ -2168,96 +2301,11 @@ def draw_human_aim():
     )
 
     # =====================================================
-    # CUE-BALL DEFLECTION AFTER IMPACT
+    # CUE-BALL FINAL POSITION
     # =====================================================
-
-    normal_speed = (
-        dx * target_dx +
-        dy * target_dy
-    )
-
-    cue_deflect_vx = (
-        dx -
-        (1 + BALL_RESTITUTION)
-        * normal_speed
-        * target_dx
-    )
-
-    cue_deflect_vy = (
-        dy -
-        (1 + BALL_RESTITUTION)
-        * normal_speed
-        * target_dy
-    )
-
-    cue_deflect_length = math.hypot(
-        cue_deflect_vx,
-        cue_deflect_vy
-    )
-
-    if cue_deflect_length > 1e-6:
-
-        cue_deflect_dx = (
-            cue_deflect_vx /
-            cue_deflect_length
-        )
-
-        cue_deflect_dy = (
-            cue_deflect_vy /
-            cue_deflect_length
-        )
-
-        cue_deflect_distance = ray_box_distance(
-            ghost_x,
-            ghost_y,
-            cue_deflect_dx,
-            cue_deflect_dy,
-            cue_ball.radius
-        )
-
-        if cue_deflect_distance != float("inf"):
-
-            cue_deflect_end_x = (
-                ghost_x +
-                cue_deflect_dx * cue_deflect_distance
-            )
-
-            cue_deflect_end_y = (
-                ghost_y +
-                cue_deflect_dy * cue_deflect_distance
-            )
-
-            cue_deflect_start_x = (
-                ghost_x +
-                cue_deflect_dx *
-                (cue_ball.radius + 1)
-            )
-
-            cue_deflect_start_y = (
-                ghost_y +
-                cue_deflect_dy *
-                (cue_ball.radius + 1)
-            )
-
-            cue_deflection_color = (
-                120,
-                220,
-                255
-            )
-
-            pygame.draw.line(
-                screen,
-                cue_deflection_color,
-                (
-                    int(cue_deflect_start_x),
-                    int(cue_deflect_start_y)
-                ),
-                (
-                    int(cue_deflect_end_x),
-                    int(cue_deflect_end_y)
-                ),
-                2
-            )
+    #
+    # La trayectoria azul predictiva ya se dibujó antes de la
+    # línea blanca; aquí se conservan solo las marcas de contacto.
 
     # =====================================================
     # REAL CONTACT POINT ON TARGET SURFACE
