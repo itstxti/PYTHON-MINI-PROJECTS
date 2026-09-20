@@ -2,8 +2,6 @@ import math
 import pygame
 
 from settings import (
-    TABLE_X,
-    TABLE_Y,
     TABLE_WIDTH,
     TABLE_HEIGHT,
     POCKET_RADIUS
@@ -15,45 +13,80 @@ CUSHION_RESTITUTION = 0.92
 
 class Table:
 
-    def __init__(self):
+    def __init__(
+        self,
+        screen
+    ):
 
         self.rect = pygame.Rect(
-            TABLE_X,
-            TABLE_Y,
+            0,
+            0,
             TABLE_WIDTH,
             TABLE_HEIGHT
+        )
+
+        self.pockets = []
+
+        self.update_position(
+            screen
+        )
+
+    # =====================================================
+    # UPDATE POSITION
+    # =====================================================
+
+    def update_position(
+        self,
+        screen
+    ):
+
+        screen_width, screen_height = (
+            screen.get_size()
+        )
+
+        self.table_x = (
+            screen_width - TABLE_WIDTH
+        ) // 2
+
+        self.table_y = (
+            screen_height - TABLE_HEIGHT
+        ) // 2
+
+        self.rect.topleft = (
+            self.table_x,
+            self.table_y
         )
 
         self.pockets = [
 
             (
-                TABLE_X,
-                TABLE_Y
+                self.table_x,
+                self.table_y
             ),
 
             (
-                TABLE_X + TABLE_WIDTH // 2,
-                TABLE_Y
+                self.table_x + TABLE_WIDTH // 2,
+                self.table_y
             ),
 
             (
-                TABLE_X + TABLE_WIDTH,
-                TABLE_Y
+                self.table_x + TABLE_WIDTH,
+                self.table_y
             ),
 
             (
-                TABLE_X,
-                TABLE_Y + TABLE_HEIGHT
+                self.table_x,
+                self.table_y + TABLE_HEIGHT
             ),
 
             (
-                TABLE_X + TABLE_WIDTH // 2,
-                TABLE_Y + TABLE_HEIGHT
+                self.table_x + TABLE_WIDTH // 2,
+                self.table_y + TABLE_HEIGHT
             ),
 
             (
-                TABLE_X + TABLE_WIDTH,
-                TABLE_Y + TABLE_HEIGHT
+                self.table_x + TABLE_WIDTH,
+                self.table_y + TABLE_HEIGHT
             ),
         ]
 
@@ -65,6 +98,10 @@ class Table:
         self,
         screen
     ):
+
+        self.update_position(
+            screen
+        )
 
         # Wood
 
@@ -133,23 +170,23 @@ class Table:
     ):
 
         left = (
-            TABLE_X +
+            self.table_x +
             ball.radius
         )
 
         right = (
-            TABLE_X +
+            self.table_x +
             TABLE_WIDTH -
             ball.radius
         )
 
         top = (
-            TABLE_Y +
+            self.table_y +
             ball.radius
         )
 
         bottom = (
-            TABLE_Y +
+            self.table_y +
             TABLE_HEIGHT -
             ball.radius
         )

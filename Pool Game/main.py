@@ -1,5 +1,6 @@
 import math
 import pygame
+import os
 
 from settings import (
     WINDOW_WIDTH,
@@ -28,6 +29,17 @@ from ai import PoolAI
 
 pygame.init()
 
+try:
+
+    pygame.mixer.init()
+
+    mixer_available = True
+
+except pygame.error:
+
+    mixer_available = False
+
+
 screen = pygame.display.set_mode(
     (
         WINDOW_WIDTH,
@@ -36,7 +48,7 @@ screen = pygame.display.set_mode(
 )
 
 pygame.display.set_caption(
-    "Pool AI"
+    "POOL GAME"
 )
 
 clock = pygame.time.Clock()
@@ -46,7 +58,7 @@ clock = pygame.time.Clock()
 # COLORS
 # =========================================================
 
-BACKGROUND = (25, 25, 25)
+BACKGROUND = (18, 28, 32)
 
 YELLOW = (255, 220, 0)
 ORANGE = (255, 150, 0)
@@ -57,7 +69,7 @@ GREY = (210, 210, 210)
 RED = (220, 70, 70)
 
 # HUD
-HUD_BACKGROUND = (8, 8, 10)
+HUD_BACKGROUND = (12, 20, 24)
 HUD_BORDER = (55, 55, 60)
 
 TEXT_PRIMARY = (245, 245, 245)
@@ -79,12 +91,30 @@ EMPTY_BALL_INNER = (48, 48, 52)
 
 
 # =========================================================
+# MENU COLORS
+# =========================================================
+
+MENU_OVERLAY = (0, 0, 0, 205)
+
+MENU_PANEL = (10, 10, 13, 245)
+MENU_PANEL_BORDER = (55, 55, 62)
+
+MENU_SELECTED = (255, 220, 0)
+MENU_NORMAL = (185, 185, 190)
+
+MENU_MUTED = (110, 110, 118)
+
+SETTINGS_TRACK = (38, 38, 43)
+SETTINGS_FILL = (135, 135, 140)
+
+
+# =========================================================
 # TABLE
 # =========================================================
 
-table = Table()
-
-
+table = Table(
+    screen
+)
 # =========================================================
 # BALL COLORS
 # =========================================================
@@ -167,7 +197,7 @@ for row in range(5):
         )
 
 
-# Orden de las bolas dentro del rack.
+# Order of the balls inside the rack.
 #
 #                  1
 #               10   2
@@ -175,8 +205,8 @@ for row in range(5):
 #          12   4   9   5
 #        6   13   7   14   15
 #
-# La bola 8 queda en el centro y las bolas
-# sólidas/rayadas quedan mezcladas.
+# The 8-ball stays in the center and solids/stripes
+# are mixed.
 
 RACK_ORDER = [
     1,
@@ -226,6 +256,7 @@ menu_selected = 0
 
 menu_options = [
     "PLAY",
+    "SETTINGS",
     "QUIT"
 ]
 
@@ -237,8 +268,411 @@ game_over_selected = 0
 
 game_over_options = [
     "PLAY AGAIN",
+    "SETTINGS",
     "QUIT"
 ]
+
+
+# =========================================================
+# SETTINGS STATE
+# =========================================================
+
+settings_open = False
+
+settings_selected = 0
+
+settings_options = [
+    "FULLSCREEN",
+    "SOUND VOLUME",
+    "MUSIC VOLUME",
+    "BACK"
+]
+
+fullscreen_enabled = False
+
+sound_volume = 100
+music_volume = 100
+
+
+# =========================================================
+# AUDIO
+# =========================================================
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+MUSIC_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "music",
+    "background.mp3"
+)
+
+MENU_MOVE_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "menu_move.mp3"
+)
+
+MENU_SELECT_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "menu_select.mp3"
+)
+
+MENU_PAUSE_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "menu_pause.mp3"
+)
+
+SHOT_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "shot.mp3"
+)
+
+BALL_HIT_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "ball_hit.mp3"
+)
+
+BALL_POCKET_PATH = os.path.join(
+    BASE_DIR,
+    "assets",
+    "sounds",
+    "ball_pocket.mp3"
+)
+
+menu_move_sound = None
+menu_select_sound = None
+menu_pause_sound = None
+
+shot_sound = None
+ball_hit_sound = None
+ball_pocket_sound = None
+
+
+if mixer_available:
+
+    # -----------------------------------------------------
+    # MENU MOVE
+    # -----------------------------------------------------
+
+    if os.path.exists(MENU_MOVE_PATH):
+
+        try:
+
+            menu_move_sound = pygame.mixer.Sound(
+                MENU_MOVE_PATH
+            )
+
+            menu_move_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load menu move sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Menu move sound not found: {MENU_MOVE_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # MENU SELECT
+    # -----------------------------------------------------
+
+    if os.path.exists(MENU_SELECT_PATH):
+
+        try:
+
+            menu_select_sound = pygame.mixer.Sound(
+                MENU_SELECT_PATH
+            )
+
+            menu_select_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load menu select sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Menu select sound not found: {MENU_SELECT_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # MENU PAUSE
+    # -----------------------------------------------------
+
+    if os.path.exists(MENU_PAUSE_PATH):
+
+        try:
+
+            menu_pause_sound = pygame.mixer.Sound(
+                MENU_PAUSE_PATH
+            )
+
+            menu_pause_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load menu pause sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Menu pause sound not found: {MENU_PAUSE_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # SHOT
+    # -----------------------------------------------------
+
+    if os.path.exists(SHOT_PATH):
+
+        try:
+
+            shot_sound = pygame.mixer.Sound(
+                SHOT_PATH
+            )
+
+            shot_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load shot sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Shot sound not found: {SHOT_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # BALL HIT
+    # -----------------------------------------------------
+
+    if os.path.exists(BALL_HIT_PATH):
+
+        try:
+
+            ball_hit_sound = pygame.mixer.Sound(
+                BALL_HIT_PATH
+            )
+
+            ball_hit_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load ball hit sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Ball hit sound not found: {BALL_HIT_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # BALL POCKET
+    # -----------------------------------------------------
+
+    if os.path.exists(BALL_POCKET_PATH):
+
+        try:
+
+            ball_pocket_sound = pygame.mixer.Sound(
+                BALL_POCKET_PATH
+            )
+
+            ball_pocket_sound.set_volume(
+                sound_volume / 100
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load ball pocket sound: {error}"
+            )
+
+    else:
+
+        print(
+            f"Ball pocket sound not found: {BALL_POCKET_PATH}"
+        )
+
+    # -----------------------------------------------------
+    # BACKGROUND MUSIC
+    # -----------------------------------------------------
+
+    if os.path.exists(MUSIC_PATH):
+
+        try:
+
+            pygame.mixer.music.load(
+                MUSIC_PATH
+            )
+
+            pygame.mixer.music.set_volume(
+                music_volume / 100
+            )
+
+            pygame.mixer.music.play(
+                loops=-1
+            )
+
+        except pygame.error as error:
+
+            print(
+                f"Could not load background music: {error}"
+            )
+
+    else:
+
+        print(
+            f"Background music not found: {MUSIC_PATH}"
+        )
+
+
+def play_menu_move():
+
+    if not mixer_available:
+        return
+
+    if menu_move_sound is None:
+        return
+
+    menu_move_sound.play()
+
+
+def play_menu_select():
+
+    if not mixer_available:
+        return
+
+    if menu_select_sound is None:
+        return
+
+    menu_select_sound.play()
+
+
+def play_menu_pause():
+
+    if not mixer_available:
+        return
+
+    if menu_pause_sound is None:
+        return
+
+    menu_pause_sound.play()
+
+
+def play_shot():
+
+    if not mixer_available:
+        return
+
+    if shot_sound is None:
+        return
+
+    shot_sound.play()
+
+
+def play_ball_hit():
+
+    if not mixer_available:
+        return
+
+    if ball_hit_sound is None:
+        return
+
+    ball_hit_sound.play()
+
+
+def play_ball_pocket():
+
+    if not mixer_available:
+        return
+
+    if ball_pocket_sound is None:
+        return
+
+    ball_pocket_sound.play()
+
+
+def update_audio_volume():
+
+    if not mixer_available:
+        return
+
+    pygame.mixer.music.set_volume(
+        music_volume / 100
+    )
+
+    if menu_move_sound is not None:
+
+        menu_move_sound.set_volume(
+            sound_volume / 100
+        )
+
+    if menu_select_sound is not None:
+
+        menu_select_sound.set_volume(
+            sound_volume / 100
+        )
+
+    if menu_pause_sound is not None:
+
+        menu_pause_sound.set_volume(
+            sound_volume / 100
+        )
+
+    if shot_sound is not None:
+
+        shot_sound.set_volume(
+            sound_volume / 100
+        )
+
+    if ball_hit_sound is not None:
+
+        ball_hit_sound.set_volume(
+            sound_volume / 100
+        )
+
+    if ball_pocket_sound is not None:
+
+        ball_pocket_sound.set_volume(
+            sound_volume / 100
+        )
 
 
 # =========================================================
@@ -252,6 +686,7 @@ pause_selected = 0
 pause_options = [
     "RESUME",
     "RESTART",
+    "SETTINGS",
     "QUIT"
 ]
 
@@ -288,6 +723,8 @@ shot_pocketed = []
 
 human_shot_pending = False
 
+shot_hit_sound_played = False
+
 
 # =========================================================
 # HUMAN PLAYER POWER
@@ -296,7 +733,7 @@ human_shot_pending = False
 HUMAN_MIN_POWER = 4.0
 HUMAN_MAX_POWER = 18.0
 
-human_power = 10.0
+human_power = 18.0
 
 
 # =========================================================
@@ -327,6 +764,7 @@ def predict_cue_path(angle):
         _aim_prediction_cache is not None
         and _aim_prediction_cache[0] == state_key
     ):
+
         return _aim_prediction_cache[1]
 
     simulated_balls = [
@@ -374,6 +812,7 @@ def predict_cue_path(angle):
             for ball in simulated_balls
             if ball.active
         ):
+
             break
 
     prediction = (
@@ -559,21 +998,23 @@ def switch_player():
 
 
 # =========================================================
-# START MENU
+# MENU DRAW HELPERS
 # =========================================================
 
-def draw_start_screen():
+def draw_fullscreen_overlay():
+
+    screen_width, screen_height = screen.get_size()
 
     overlay = pygame.Surface(
         (
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT
+            screen_width,
+            screen_height
         ),
         pygame.SRCALPHA
     )
 
     overlay.fill(
-        (0, 0, 0, 175)
+        MENU_OVERLAY
     )
 
     screen.blit(
@@ -581,89 +1022,594 @@ def draw_start_screen():
         (0, 0)
     )
 
-    title_font = pygame.font.SysFont(
+
+def draw_menu_panel(
+    width=520,
+    height=430
+):
+
+    screen_width, screen_height = screen.get_size()
+
+    panel_rect = pygame.Rect(
+        (
+            screen_width - width
+        ) // 2,
+        (
+            screen_height - height
+        ) // 2,
+        width,
+        height
+    )
+
+    panel = pygame.Surface(
+        panel_rect.size,
+        pygame.SRCALPHA
+    )
+
+    panel.fill(
+        MENU_PANEL
+    )
+
+    pygame.draw.rect(
+        panel,
+        MENU_PANEL_BORDER,
+        panel.get_rect(),
+        1,
+        border_radius=16
+    )
+
+    screen.blit(
+        panel,
+        panel_rect
+    )
+
+    return panel_rect
+
+
+def draw_menu_title(
+    text,
+    y,
+    size=48,
+    color=WHITE
+):
+
+    font = pygame.font.SysFont(
         "arial",
-        56,
+        size,
         bold=True
     )
 
-    option_font = pygame.font.SysFont(
-        "arial",
-        28,
-        bold=True
-    )
-
-    hint_font = pygame.font.SysFont(
-        "arial",
-        16
-    )
-
-    title = title_font.render(
-        "POOL AI",
+    surface = font.render(
+        text,
         True,
-        WHITE
+        color
     )
 
-    title_rect = title.get_rect(
+    screen_width = screen.get_width()
+
+    rect = surface.get_rect(
         center=(
-            WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 - 110
+            screen_width // 2,
+            y
         )
     )
 
     screen.blit(
-        title,
-        title_rect
+        surface,
+        rect
+    )
+
+
+def draw_menu_option(
+    text,
+    y,
+    selected=False,
+    width=300
+):
+
+    font = pygame.font.SysFont(
+        "arial",
+        23,
+        bold=True
+    )
+
+    screen_width = screen.get_width()
+
+    if selected:
+
+        color = MENU_SELECTED
+
+        rect = pygame.Rect(
+            (
+                screen_width - width
+            ) // 2,
+            y - 22,
+            width,
+            44
+        )
+
+        pygame.draw.rect(
+            screen,
+            (
+                25,
+                25,
+                28
+            ),
+            rect,
+            border_radius=8
+        )
+
+        pygame.draw.rect(
+            screen,
+            (
+                85,
+                75,
+                20
+            ),
+            rect,
+            1,
+            border_radius=8
+        )
+
+    else:
+
+        color = MENU_NORMAL
+
+    surface = font.render(
+        text,
+        True,
+        color
+    )
+
+    text_rect = surface.get_rect(
+        center=(
+            screen_width // 2,
+            y
+        )
+    )
+
+    screen.blit(
+        surface,
+        text_rect
+    )
+
+
+def draw_menu_hint(
+    text,
+    y
+):
+
+    font = pygame.font.SysFont(
+        "arial",
+        14
+    )
+
+    surface = font.render(
+        text,
+        True,
+        MENU_MUTED
+    )
+
+    screen_width = screen.get_width()
+
+    rect = surface.get_rect(
+        center=(
+            screen_width // 2,
+            y
+        )
+    )
+
+    screen.blit(
+        surface,
+        rect
+    )
+
+
+# =========================================================
+# START MENU
+# =========================================================
+
+def draw_start_screen():
+
+    draw_fullscreen_overlay()
+
+    panel_rect = draw_menu_panel(
+        560,
+        470
+    )
+
+    draw_menu_title(
+        "POOL GAME",
+        panel_rect.top + 82,
+        52
+    )
+
+    draw_menu_title(
+        "Player VS AI",
+        panel_rect.top + 125,
+        13,
+        MENU_MUTED
+    )
+
+    option_start_y = (
+        panel_rect.top + 205
     )
 
     for index, option in enumerate(
         menu_options
     ):
 
-        if index == menu_selected:
-
-            color = YELLOW
-
-        else:
-
-            color = GREY
-
-        text = option_font.render(
+        draw_menu_option(
             option,
-            True,
-            color
-        )
-
-        text_rect = text.get_rect(
-            center=(
-                WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT // 2 +
-                index * 55
+            option_start_y + index * 55,
+            selected=(
+                index == menu_selected
             )
         )
 
-        screen.blit(
-            text,
-            text_rect
-        )
-
-    hint = hint_font.render(
-        "Use ↑ ↓ and ENTER",
-        True,
-        GREY
+    draw_menu_hint(
+        "↑ ↓  SELECT     ENTER  CONFIRM",
+        panel_rect.bottom - 35
     )
 
-    hint_rect = hint.get_rect(
+
+# =========================================================
+# SETTINGS HELPERS
+# =========================================================
+
+def draw_setting_value(
+    text,
+    x,
+    y,
+    selected=False
+):
+
+    font = pygame.font.SysFont(
+        "arial",
+        17,
+        bold=True
+    )
+
+    color = (
+        MENU_SELECTED
+        if selected
+        else TEXT_PRIMARY
+    )
+
+    surface = font.render(
+        text,
+        True,
+        color
+    )
+
+    rect = surface.get_rect(
         center=(
-            WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 + 115
+            x,
+            y
         )
     )
 
     screen.blit(
-        hint,
-        hint_rect
+        surface,
+        rect
     )
+
+
+def draw_volume_slider(
+    x,
+    y,
+    width,
+    value,
+    selected
+):
+
+    track_rect = pygame.Rect(
+        x,
+        y - 4,
+        width,
+        8
+    )
+
+    pygame.draw.rect(
+        screen,
+        SETTINGS_TRACK,
+        track_rect,
+        border_radius=4
+    )
+
+    fill_width = int(
+        width * (
+            value / 100
+        )
+    )
+
+    if fill_width > 0:
+
+        fill_rect = pygame.Rect(
+            x,
+            y - 4,
+            fill_width,
+            8
+        )
+
+        pygame.draw.rect(
+            screen,
+            SETTINGS_FILL if selected else (
+                150,
+                150,
+                150
+            ),
+            fill_rect,
+            border_radius=4
+        )
+
+    knob_x = (
+        x +
+        fill_width
+    )
+
+    pygame.draw.circle(
+        screen,
+        (
+            SETTINGS_FILL
+            if selected
+            else MENU_NORMAL
+        ),
+        (
+            knob_x,
+            y
+        ),
+        6
+    )
+
+
+def draw_settings_screen():
+
+    draw_fullscreen_overlay()
+
+    panel_rect = draw_menu_panel(
+        700,
+        540
+    )
+
+    draw_menu_title(
+        "SETTINGS",
+        panel_rect.top + 65,
+        42
+    )
+
+    label_font = pygame.font.SysFont(
+        "arial",
+        17,
+        bold=True
+    )
+
+    # -----------------------------------------------------
+    # LAYOUT
+    # -----------------------------------------------------
+
+    center_x = panel_rect.centerx
+
+    row_start = panel_rect.top + 150
+    row_spacing = 75
+
+    label_x = center_x - 280
+    control_x = center_x - 120
+    value_x = center_x + 245
+
+    # -----------------------------------------------------
+    # FULLSCREEN
+    # -----------------------------------------------------
+
+    selected = (
+        settings_selected == 0
+    )
+
+    label = label_font.render(
+        "FULLSCREEN",
+        True,
+        (
+            MENU_SELECTED
+            if selected
+            else TEXT_PRIMARY
+        )
+    )
+
+    screen.blit(
+        label,
+        (
+            label_x,
+            row_start
+        )
+    )
+
+    draw_setting_value(
+        "ON" if fullscreen_enabled else "OFF",
+        value_x,
+        row_start + 18,
+        selected
+    )
+
+    # -----------------------------------------------------
+    # SOUND VOLUME
+    # -----------------------------------------------------
+
+    sound_y = row_start + row_spacing
+
+    selected = (
+        settings_selected == 1
+    )
+
+    label = label_font.render(
+        "SOUND VOLUME",
+        True,
+        (
+            MENU_SELECTED
+            if selected
+            else TEXT_PRIMARY
+        )
+    )
+
+    screen.blit(
+        label,
+        (
+            label_x,
+            sound_y
+        )
+    )
+
+    draw_volume_slider(
+        control_x,
+        sound_y + 9,
+        320,
+        sound_volume,
+        selected
+    )
+
+    draw_setting_value(
+        f"{sound_volume}%",
+        value_x,
+        sound_y + 8,
+        selected
+    )
+
+    # -----------------------------------------------------
+    # MUSIC VOLUME
+    # -----------------------------------------------------
+
+    music_y = sound_y + row_spacing
+
+    selected = (
+        settings_selected == 2
+    )
+
+    label = label_font.render(
+        "MUSIC VOLUME",
+        True,
+        (
+            MENU_SELECTED
+            if selected
+            else TEXT_PRIMARY
+        )
+    )
+
+    screen.blit(
+        label,
+        (
+            label_x,
+            music_y
+        )
+    )
+
+    draw_volume_slider(
+        control_x,
+        music_y + 9,
+        320,
+        music_volume,
+        selected
+    )
+
+    draw_setting_value(
+        f"{music_volume}%",
+        value_x,
+        music_y + 8,
+        selected
+    )
+
+    # -----------------------------------------------------
+    # BACK
+    # -----------------------------------------------------
+
+    back_y = music_y + row_spacing
+
+    draw_menu_option(
+        "BACK",
+        back_y,
+        selected=(
+            settings_selected == 3
+        ),
+        width=240
+    )
+
+    # -----------------------------------------------------
+    # HINT
+    # -----------------------------------------------------
+
+    draw_menu_hint(
+        "↑ ↓  SELECT     ← →  ADJUST     ENTER  CONFIRM     ESC  BACK",
+        panel_rect.bottom - 35
+    )
+
+
+# =========================================================
+# SETTINGS ACTIONS
+# =========================================================
+
+def toggle_fullscreen():
+
+    global fullscreen_enabled
+    global screen
+    global table
+
+    fullscreen_enabled = not fullscreen_enabled
+
+    if fullscreen_enabled:
+
+        info = pygame.display.Info()
+
+        screen = pygame.display.set_mode(
+            (
+                info.current_w,
+                info.current_h
+            ),
+            pygame.FULLSCREEN
+        )
+
+    else:
+
+        screen = pygame.display.set_mode(
+            (
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT
+            )
+        )
+
+    table.update_position(
+        screen
+    )
+
+def adjust_setting(direction):
+
+    global sound_volume
+    global music_volume
+
+    if settings_selected == 0:
+
+        toggle_fullscreen()
+
+    elif settings_selected == 1:
+
+        sound_volume = max(
+            0,
+            min(
+                100,
+                sound_volume + direction * 5
+            )
+        )
+
+        update_audio_volume()
+
+    elif settings_selected == 2:
+
+        music_volume = max(
+            0,
+            min(
+                100,
+                music_volume + direction * 5
+            )
+        )
+
+        update_audio_volume()
 
 
 # =========================================================
@@ -672,38 +1618,11 @@ def draw_start_screen():
 
 def draw_game_over():
 
-    overlay = pygame.Surface(
-        (
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT
-        ),
-        pygame.SRCALPHA
-    )
+    draw_fullscreen_overlay()
 
-    overlay.fill(
-        (0, 0, 0, 185)
-    )
-
-    screen.blit(
-        overlay,
-        (0, 0)
-    )
-
-    title_font = pygame.font.SysFont(
-        "arial",
-        52,
-        bold=True
-    )
-
-    option_font = pygame.font.SysFont(
-        "arial",
-        25,
-        bold=True
-    )
-
-    hint_font = pygame.font.SysFont(
-        "arial",
-        17
+    panel_rect = draw_menu_panel(
+        560,
+        450
     )
 
     if game_won:
@@ -716,71 +1635,39 @@ def draw_game_over():
         message = "AI WINS"
         message_color = RED
 
-    title = title_font.render(
+    draw_menu_title(
         message,
-        True,
+        panel_rect.top + 90,
+        50,
         message_color
     )
 
-    title_rect = title.get_rect(
-        center=(
-            WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 - 80
-        )
+    draw_menu_title(
+        "GAME OVER",
+        panel_rect.top + 130,
+        13,
+        MENU_MUTED
     )
 
-    screen.blit(
-        title,
-        title_rect
+    option_start_y = (
+        panel_rect.top + 215
     )
 
     for index, option in enumerate(
         game_over_options
     ):
 
-        if index == game_over_selected:
-
-            color = YELLOW
-
-        else:
-
-            color = GREY
-
-        text = option_font.render(
+        draw_menu_option(
             option,
-            True,
-            color
-        )
-
-        text_rect = text.get_rect(
-            center=(
-                WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT // 2 +
-                index * 50
+            option_start_y + index * 55,
+            selected=(
+                index == game_over_selected
             )
         )
 
-        screen.blit(
-            text,
-            text_rect
-        )
-
-    hint = hint_font.render(
-        "Use ↑ ↓ and ENTER",
-        True,
-        GREY
-    )
-
-    hint_rect = hint.get_rect(
-        center=(
-            WINDOW_WIDTH // 2,
-            WINDOW_HEIGHT // 2 + 120
-        )
-    )
-
-    screen.blit(
-        hint,
-        hint_rect
+    draw_menu_hint(
+        "↑ ↓  SELECT     ENTER  CONFIRM",
+        panel_rect.bottom - 35
     )
 
 
@@ -790,158 +1677,45 @@ def draw_game_over():
 
 def draw_pause_menu():
 
-    overlay = pygame.Surface(
-        (
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT
-        ),
-        pygame.SRCALPHA
+    draw_fullscreen_overlay()
+
+    panel_rect = draw_menu_panel(
+        560,
+        500
     )
 
-    overlay.fill(
-        (0, 0, 0, 185)
-    )
-
-    screen.blit(
-        overlay,
-        (0, 0)
-    )
-
-    panel_width = 330
-    panel_height = 310
-
-    panel_rect = pygame.Rect(
-        (
-            WINDOW_WIDTH - panel_width
-        ) // 2,
-        (
-            WINDOW_HEIGHT - panel_height
-        ) // 2,
-        panel_width,
-        panel_height
-    )
-
-    panel = pygame.Surface(
-        panel_rect.size,
-        pygame.SRCALPHA
-    )
-
-    panel.fill(
-        (10, 10, 12, 235)
-    )
-
-    pygame.draw.rect(
-        panel,
-        PANEL_BORDER,
-        panel.get_rect(),
-        1,
-        border_radius=12
-    )
-
-    screen.blit(
-        panel,
-        panel_rect
-    )
-
-    title_font = pygame.font.SysFont(
-        "arial",
-        42,
-        bold=True
-    )
-
-    option_font = pygame.font.SysFont(
-        "arial",
-        22,
-        bold=True
-    )
-
-    hint_font = pygame.font.SysFont(
-        "arial",
-        15
-    )
-
-    title = title_font.render(
+    draw_menu_title(
         "PAUSED",
-        True,
-        WHITE
+        panel_rect.top + 75,
+        45
     )
 
-    title_rect = title.get_rect(
-        center=(
-            WINDOW_WIDTH // 2,
-            panel_rect.top + 55
-        )
+    draw_menu_title(
+        "POOL GAME",
+        panel_rect.top + 113,
+        13,
+        MENU_MUTED
     )
 
-    screen.blit(
-        title,
-        title_rect
+    option_start_y = (
+        panel_rect.top + 190
     )
 
     for index, option in enumerate(
         pause_options
     ):
 
-        selected = (
-            index == pause_selected
-        )
-
-        if selected:
-
-            color = YELLOW
-
-            selection_rect = pygame.Rect(
-                panel_rect.left + 65,
-                panel_rect.top + 95 + index * 50,
-                panel_rect.width - 130,
-                38
-            )
-
-            pygame.draw.rect(
-                screen,
-                (45, 40, 10),
-                selection_rect,
-                border_radius=8
-            )
-
-        else:
-
-            color = GREY
-
-        text = option_font.render(
+        draw_menu_option(
             option,
-            True,
-            color
-        )
-
-        text_rect = text.get_rect(
-            center=(
-                WINDOW_WIDTH // 2,
-                panel_rect.top + 114 + index * 50
+            option_start_y + index * 55,
+            selected=(
+                index == pause_selected
             )
         )
 
-        screen.blit(
-            text,
-            text_rect
-        )
-
-    hint = hint_font.render(
-        "↑ ↓ Select     ENTER Confirm     ESC Resume",
-        True,
-        TEXT_SECONDARY
-    )
-
-    hint_rect = hint.get_rect(
-        center=(
-            WINDOW_WIDTH // 2,
-            panel_rect.bottom - 27
-        )
-    )
-
-    screen.blit(
-        hint,
-        hint_rect
+    draw_menu_hint(
+        "↑ ↓  SELECT     ENTER  CONFIRM     ESC  RESUME",
+        panel_rect.bottom - 35
     )
 
 
@@ -999,10 +1773,6 @@ def draw_hud_ball(
         number in stripe_numbers()
     )
 
-    # -----------------------------------------------------
-    # STRIPED BALL
-    # -----------------------------------------------------
-
     if is_stripe:
 
         pygame.draw.circle(
@@ -1042,10 +1812,6 @@ def draw_hud_ball(
             1
         )
 
-    # -----------------------------------------------------
-    # SOLID BALL
-    # -----------------------------------------------------
-
     else:
 
         pygame.draw.circle(
@@ -1068,10 +1834,6 @@ def draw_hud_ball(
             radius,
             1
         )
-
-    # -----------------------------------------------------
-    # NUMBER
-    # -----------------------------------------------------
 
     number_font = pygame.font.SysFont(
         "arial",
@@ -1104,7 +1866,6 @@ def draw_empty_hud_ball(
     radius=10
 ):
 
-    # Outer empty silhouette
     pygame.draw.circle(
         screen,
         EMPTY_BALL_FILL,
@@ -1126,7 +1887,6 @@ def draw_empty_hud_ball(
         1
     )
 
-    # Inner subtle circle
     pygame.draw.circle(
         screen,
         EMPTY_BALL_INNER,
@@ -1167,10 +1927,6 @@ def draw_group_balls(
     spacing=25
 ):
 
-    # -----------------------------------------------------
-    # GROUP NOT ASSIGNED
-    # -----------------------------------------------------
-
     if group is None:
 
         for index in range(7):
@@ -1183,10 +1939,6 @@ def draw_group_balls(
 
         return
 
-    # -----------------------------------------------------
-    # GROUP ASSIGNED
-    # -----------------------------------------------------
-
     numbers = get_hud_ball_numbers(
         group
     )
@@ -1194,10 +1946,6 @@ def draw_group_balls(
     remaining = set(
         remaining_numbers(group)
     )
-
-    # -----------------------------------------------------
-    # DRAW REMAINING GROUP BALLS
-    # -----------------------------------------------------
 
     for index, number in enumerate(numbers):
 
@@ -1212,21 +1960,14 @@ def draw_group_balls(
 
         else:
 
-            # Pocketed ball:
-            # leave its position empty.
             draw_empty_hud_ball(
                 x + index * spacing,
                 y,
                 ball_radius
             )
 
-    # -----------------------------------------------------
-    # ALL GROUP BALLS CLEARED
-    # -----------------------------------------------------
-
     if not remaining:
 
-        # Replace the first silhouette with the 8-ball
         draw_hud_eight_ball(
             x,
             y,
@@ -1261,7 +2002,6 @@ def draw_hud_eight_ball(
         1
     )
 
-    # White number circle
     inner_radius = max(
         4,
         radius - 4
@@ -1399,9 +2139,11 @@ def draw_game_status():
     padding_x = 14
     padding_y = 6
 
+    screen_width = screen.get_width()
+
     rect = text_surface.get_rect(
         center=(
-            WINDOW_WIDTH // 2,
+            screen_width // 2,
             TABLE_Y - 27
         )
     )
@@ -1447,15 +2189,18 @@ def draw_game_status():
 
 def draw_hud():
 
-    # =====================================================
-    # TOP BAR
-    # =====================================================
+    hud_height = 85
 
-    hud_height = 78
+    screen_width = screen.get_width()
+    screen_height = screen.get_height()
+
+    # =========================================================
+    # TOP HUD
+    # =========================================================
 
     hud = pygame.Surface(
         (
-            WINDOW_WIDTH,
+            screen_width,
             hud_height
         ),
         pygame.SRCALPHA
@@ -1475,6 +2220,21 @@ def draw_hud():
         (0, 0)
     )
 
+    # Subtle bottom shadow
+    pygame.draw.line(
+        screen,
+        (0, 0, 0),
+        (
+            0,
+            hud_height
+        ),
+        (
+            screen_width,
+            hud_height
+        ),
+        2
+    )
+
     pygame.draw.line(
         screen,
         HUD_BORDER,
@@ -1483,11 +2243,15 @@ def draw_hud():
             hud_height - 1
         ),
         (
-            WINDOW_WIDTH,
+            screen_width,
             hud_height - 1
         ),
         1
     )
+
+    # =========================================================
+    # FONTS
+    # =========================================================
 
     player_font = pygame.font.SysFont(
         "arial",
@@ -1501,14 +2265,9 @@ def draw_hud():
         bold=True
     )
 
-    normal_font = pygame.font.SysFont(
-        "arial",
-        12
-    )
-
-    # =====================================================
+    # =========================================================
     # PLAYER
-    # =====================================================
+    # =========================================================
 
     player_x = 25
 
@@ -1534,6 +2293,21 @@ def draw_hud():
         player_color
     )
 
+    # Subtle title shadow
+    player_shadow = player_font.render(
+        "PLAYER",
+        True,
+        (0, 0, 0)
+    )
+
+    screen.blit(
+        player_shadow,
+        (
+            player_x + 1,
+            14
+        )
+    )
+
     screen.blit(
         player_title,
         (
@@ -1550,10 +2324,6 @@ def draw_hud():
         )
     )
 
-    # =====================================================
-    # PLAYER BALLS
-    # =====================================================
-
     draw_group_balls(
         player_x + 10,
         66,
@@ -1562,11 +2332,11 @@ def draw_hud():
         spacing=18
     )
 
-    # =====================================================
+    # =========================================================
     # CENTER GROUP
-    # =====================================================
+    # =========================================================
 
-    center_x = WINDOW_WIDTH // 2
+    center_x = screen_width // 2
 
     if player_group == "solid":
 
@@ -1596,16 +2366,35 @@ def draw_hud():
         )
     )
 
+    # Subtle shadow
+    group_shadow = player_font.render(
+        group_text,
+        True,
+        (0, 0, 0)
+    )
+
+    group_shadow_rect = group_shadow.get_rect(
+        center=(
+            center_x + 1,
+            26
+        )
+    )
+
+    screen.blit(
+        group_shadow,
+        group_shadow_rect
+    )
+
     screen.blit(
         group_surface,
         group_rect
     )
 
-    # =====================================================
+    # =========================================================
     # AI
-    # =====================================================
+    # =========================================================
 
-    right_x = WINDOW_WIDTH - 25
+    right_x = screen_width - 25
 
     if current_player == PLAYER_AI:
 
@@ -1639,6 +2428,23 @@ def draw_hud():
         right=right_x
     )
 
+    # AI shadow
+    ai_shadow = player_font.render(
+        "AI",
+        True,
+        (0, 0, 0)
+    )
+
+    ai_shadow_rect = ai_shadow.get_rect(
+        top=14,
+        right=right_x - 1
+    )
+
+    screen.blit(
+        ai_shadow,
+        ai_shadow_rect
+    )
+
     screen.blit(
         ai_title,
         ai_title_rect
@@ -1647,16 +2453,6 @@ def draw_hud():
     screen.blit(
         ai_status_surface,
         ai_status_rect
-    )
-
-    # =====================================================
-    # AI BALLS
-    # =====================================================
-
-    ai_ball_numbers = (
-        get_hud_ball_numbers(ai_group)
-        if ai_group is not None
-        else list(range(7))
     )
 
     ai_start_x = (
@@ -1675,9 +2471,9 @@ def draw_hud():
         spacing=18
     )
 
-    # =====================================================
-    # BOTTOM POWER PANEL
-    # =====================================================
+    # =========================================================
+    # POWER PANEL
+    # =========================================================
 
     if current_player == PLAYER_HUMAN:
 
@@ -1685,7 +2481,7 @@ def draw_hud():
         panel_height = 64
 
         panel_x = 22
-        panel_y = WINDOW_HEIGHT - panel_height - 18
+        panel_y = screen_height - panel_height - 18
 
         panel_rect = pygame.Rect(
             panel_x,
@@ -1694,12 +2490,45 @@ def draw_hud():
             panel_height
         )
 
+        # Outer shadow
+        shadow_rect = panel_rect.move(
+            0,
+            3
+        )
+
+        pygame.draw.rect(
+            screen,
+            HUD_BACKGROUND,
+            shadow_rect,
+            border_radius=9
+        )
+
+        # Main panel
         draw_panel(
             panel_rect,
-            fill=(8, 8, 10, 225),
-            border=(55, 55, 60),
+            fill=(22, 34, 39),
+            border=(65, 75, 78),
             radius=9
         )
+
+        # Subtle top highlight
+        pygame.draw.line(
+            screen,
+            (85, 95, 98),
+            (
+                panel_x + 10,
+                panel_y + 1
+            ),
+            (
+                panel_x + panel_width - 10,
+                panel_y + 1
+            ),
+            1
+        )
+
+        # =====================================================
+        # POWER TEXT
+        # =====================================================
 
         power_font = pygame.font.SysFont(
             "arial",
@@ -1721,9 +2550,9 @@ def draw_hud():
             )
         )
 
-        # -------------------------------------------------
+        # =====================================================
         # POWER BAR
-        # -------------------------------------------------
+        # =====================================================
 
         bar_x = panel_x + 12
         bar_y = panel_y + 33
@@ -1731,9 +2560,23 @@ def draw_hud():
         bar_width = panel_width - 24
         bar_height = 9
 
+        # Outer bar
         pygame.draw.rect(
             screen,
-            (30, 30, 34),
+            (5, 7, 8),
+            (
+                bar_x - 1,
+                bar_y - 1,
+                bar_width + 2,
+                bar_height + 2
+            ),
+            border_radius=5
+        )
+
+        # Inner background
+        pygame.draw.rect(
+            screen,
+            (28, 34, 37),
             (
                 bar_x,
                 bar_y,
@@ -1744,10 +2587,10 @@ def draw_hud():
         )
 
         progress = (
-            human_power -
+            3 + human_power -
             HUMAN_MIN_POWER
         ) / (
-            HUMAN_MAX_POWER -
+            3+ HUMAN_MAX_POWER -
             HUMAN_MIN_POWER
         )
 
@@ -1766,9 +2609,23 @@ def draw_hud():
 
         if fill_width > 0:
 
+            # Power glow
             pygame.draw.rect(
                 screen,
-                YELLOW,
+                (135, 72, 32),
+                (
+                    bar_x + 1,
+                    bar_y + 1,
+                    fill_width + 2,
+                    bar_height - 2
+                ),
+                border_radius=4
+            )
+
+            # Main power fill
+            pygame.draw.rect(
+                screen,
+                (135, 72, 32),
                 (
                     bar_x + 2,
                     bar_y + 2,
@@ -1778,9 +2635,53 @@ def draw_hud():
                 border_radius=3
             )
 
-        # -------------------------------------------------
+            # Highlight
+            if fill_width > 3:
+
+                pygame.draw.line(
+                    screen,
+                    (255, 240, 150),
+                    (
+                        bar_x + 3,
+                        bar_y + 3
+                    ),
+                    (
+                        bar_x + 1 + fill_width,
+                        bar_y + 3
+                    ),
+                    1
+                )
+
+                pygame.draw.rect(
+                    screen,
+                    (0, 0, 0),
+                    (
+                    bar_x + 1 + fill_width - 17,
+                    bar_y + 1,
+                    15,
+                    bar_height - 2
+                    ),
+                    border_radius=2
+                )  
+
+                # White tip
+                pygame.draw.rect(
+                    screen,
+                    (255, 255, 255),
+                    (
+                        bar_x + 1 + fill_width - 2,
+                        bar_y + 1,
+                        4,
+                        bar_height - 2
+                    ),
+                    border_radius=2
+                )
+
+                  
+
+        # =====================================================
         # POWER CONTROLS
-        # -------------------------------------------------
+        # =====================================================
 
         controls = pygame.font.SysFont(
             "arial",
@@ -1805,9 +2706,9 @@ def draw_hud():
             controls_rect
         )
 
-    # =====================================================
-    # BOTTOM RIGHT CONTROLS
-    # =====================================================
+    # =========================================================
+    # BOTTOM CONTROLS
+    # =========================================================
 
     controls_font = pygame.font.SysFont(
         "arial",
@@ -1822,8 +2723,8 @@ def draw_hud():
 
     controls_rect = controls.get_rect(
         bottomright=(
-            WINDOW_WIDTH - 22,
-            WINDOW_HEIGHT - 24
+            screen_width - 22,
+            screen_height - 24
         )
     )
 
@@ -1831,7 +2732,6 @@ def draw_hud():
         controls,
         controls_rect
     )
-
 
 # =========================================================
 # HUMAN AIM PREVIEW
@@ -1846,6 +2746,9 @@ def draw_human_aim():
         return
 
     if paused:
+        return
+
+    if settings_open:
         return
 
     if current_player != PLAYER_HUMAN:
@@ -1891,10 +2794,6 @@ def draw_human_aim():
         dx
     )
 
-    # =====================================================
-    # GEOMETRY HELPERS
-    # =====================================================
-
     def ray_box_distance(
         origin_x,
         origin_y,
@@ -1934,6 +2833,7 @@ def draw_human_aim():
                 origin_x < left
                 or origin_x > right
             ):
+
                 return float("inf")
 
         else:
@@ -1974,6 +2874,7 @@ def draw_human_aim():
                 origin_y < top
                 or origin_y > bottom
             ):
+
                 return float("inf")
 
         else:
@@ -2018,10 +2919,6 @@ def draw_human_aim():
             return t_min
 
         return t_max
-
-    # =====================================================
-    # FIND FIRST BALL HIT BY THE WHITE BALL
-    # =====================================================
 
     nearest_distance = float("inf")
     hit_ball = None
@@ -2076,6 +2973,7 @@ def draw_human_aim():
             perpendicular_squared >
             collision_radius ** 2
         ):
+
             continue
 
         offset = math.sqrt(
@@ -2099,10 +2997,6 @@ def draw_human_aim():
             nearest_distance = hit_distance
             hit_ball = ball
 
-    # =====================================================
-    # FIND CUSHION
-    # =====================================================
-
     table_distance = ray_box_distance(
         cue_ball.x,
         cue_ball.y,
@@ -2118,15 +3012,6 @@ def draw_human_aim():
         hit_ball is not None
         and nearest_distance < table_distance
     )
-
-    # =====================================================
-    # PREDICTED CUE-BALL PATH
-    # =====================================================
-    #
-    # La línea azul usa la misma física del disparo real:
-    # fricción, bandas, colisiones y potencia actual. Así
-    # marca el recorrido completo de la bola blanca y su
-    # posición final aproximada.
 
     predicted_cue_path, predicted_cue_active = predict_cue_path(
         angle
@@ -2201,10 +3086,6 @@ def draw_human_aim():
     if not hit_first:
         return
 
-    # =====================================================
-    # GHOST BALL
-    # =====================================================
-
     ghost_x = (
         cue_ball.x +
         dx * nearest_distance
@@ -2226,10 +3107,6 @@ def draw_human_aim():
         1
     )
 
-    # =====================================================
-    # TARGET BALL OUTGOING DIRECTION
-    # =====================================================
-
     target_dx = (
         hit_ball.x -
         ghost_x
@@ -2250,10 +3127,6 @@ def draw_human_aim():
 
     target_dx /= target_length
     target_dy /= target_length
-
-    # =====================================================
-    # TARGET BALL TRAJECTORY
-    # =====================================================
 
     target_table_distance = ray_box_distance(
         hit_ball.x,
@@ -2278,12 +3151,16 @@ def draw_human_aim():
 
     target_line_start_x = (
         hit_ball.x +
-        target_dx * (hit_ball.radius + 1)
+        target_dx * (
+            hit_ball.radius + 1
+        )
     )
 
     target_line_start_y = (
         hit_ball.y +
-        target_dy * (hit_ball.radius + 1)
+        target_dy * (
+            hit_ball.radius + 1
+        )
     )
 
     pygame.draw.line(
@@ -2299,17 +3176,6 @@ def draw_human_aim():
         ),
         2
     )
-
-    # =====================================================
-    # CUE-BALL FINAL POSITION
-    # =====================================================
-    #
-    # La trayectoria azul predictiva ya se dibujó antes de la
-    # línea blanca; aquí se conservan solo las marcas de contacto.
-
-    # =====================================================
-    # REAL CONTACT POINT ON TARGET SURFACE
-    # =====================================================
 
     contact_x = (
         hit_ball.x -
@@ -2350,6 +3216,9 @@ def draw_human_aim():
 def draw_ai_prediction():
 
     if paused:
+        return
+
+    if settings_open:
         return
 
     if not shot_pending:
@@ -2509,10 +3378,13 @@ def start_shot(shooter):
     global shot_in_progress
     global shot_shooter
     global shot_pocketed
+    global shot_hit_sound_played
 
     shot_in_progress = True
     shot_shooter = shooter
     shot_pocketed = []
+
+    shot_hit_sound_played = False
 
     cue_ball.first_hit_number = None
 
@@ -2532,6 +3404,9 @@ def fire_human_shot():
         return
 
     if paused:
+        return
+
+    if settings_open:
         return
 
     if shot_in_progress:
@@ -2571,6 +3446,8 @@ def fire_human_shot():
     start_shot(
         PLAYER_HUMAN
     )
+
+    play_shot()
 
     cue_ball.shoot(
         angle,
@@ -2625,6 +3502,9 @@ def reset_game():
     global paused
     global pause_selected
 
+    global settings_open
+    global settings_selected
+
     global current_player
 
     global player_group
@@ -2639,16 +3519,22 @@ def reset_game():
     global shot_pocketed
 
     global human_shot_pending
+    global shot_hit_sound_played
 
     global human_power
+
+    global _aim_prediction_cache
 
     waiting_for_start = False
 
     paused = False
 
+    settings_open = False
+
     menu_selected = 0
     game_over_selected = 0
     pause_selected = 0
+    settings_selected = 0
 
     game_over = False
     game_won = False
@@ -2669,8 +3555,11 @@ def reset_game():
     shot_pocketed = []
 
     human_shot_pending = False
+    shot_hit_sound_played = False
 
-    human_power = 10.0
+    human_power = 18.0
+
+    _aim_prediction_cache = None
 
     cue_ball.active = True
 
@@ -2690,7 +3579,7 @@ def reset_game():
     cue_ball.first_hit_number = None
 
     for number, position in zip(
-        range(1, 16),
+        RACK_ORDER,
         rack_positions
     ):
 
@@ -2819,8 +3708,11 @@ def process_shot_result(
             else ai_group
         )
 
-        if shooter_group is not None and all_group_cleared(
-            shooter_group
+        if (
+            shooter_group is not None
+            and all_group_cleared(
+                shooter_group
+            )
         ):
 
             if shooter == PLAYER_HUMAN:
@@ -2872,6 +3764,7 @@ def process_shot_result(
             ):
 
                 first_group = group
+
                 break
 
         if first_group is not None:
@@ -2954,6 +3847,9 @@ def start_ai_turn():
     if paused:
         return
 
+    if settings_open:
+        return
+
     if shot_in_progress:
         return
 
@@ -3016,9 +3912,14 @@ def fire_ai_shot():
     if paused:
         return
 
+    if settings_open:
+        return
+
     start_shot(
         PLAYER_AI
     )
+
+    play_shot()
 
     cue_ball.shoot(
         current_shot["angle"],
@@ -3053,9 +3954,101 @@ while running:
 
         elif event.type == pygame.KEYDOWN:
 
-            # ---------------------------------------------
-            # START MENU
-            # ---------------------------------------------
+            if event.key == pygame.K_F11:
+
+                toggle_fullscreen()
+
+                continue
+
+            if settings_open:
+
+                if event.key == pygame.K_UP:
+
+                    settings_selected = (
+                        settings_selected - 1
+                    ) % len(settings_options)
+
+                    play_menu_move()
+
+                elif event.key == pygame.K_DOWN:
+
+                    settings_selected = (
+                        settings_selected + 1
+                    ) % len(settings_options)
+
+                    play_menu_move()
+
+                elif event.key == pygame.K_LEFT:
+
+                    if settings_selected in (
+                        1,
+                        2
+                    ):
+
+                        adjust_setting(-1)
+
+                        play_menu_move()
+
+                elif event.key == pygame.K_RIGHT:
+
+                    if settings_selected in (
+                        1,
+                        2
+                    ):
+
+                        adjust_setting(1)
+
+                        play_menu_move()
+
+                elif event.key == pygame.K_RETURN:
+
+                    selected_option = (
+                        settings_options[
+                            settings_selected
+                        ]
+                    )
+
+                    play_menu_select()
+
+                    if selected_option == "FULLSCREEN":
+
+                        toggle_fullscreen()
+
+                    elif selected_option == "BACK":
+
+                        settings_open = False
+
+                        if waiting_for_start:
+
+                            menu_selected = 0
+
+                        elif paused:
+
+                            pause_selected = 0
+
+                        elif game_over:
+
+                            game_over_selected = 0
+
+                elif event.key == pygame.K_ESCAPE:
+
+                    play_menu_pause()
+
+                    settings_open = False
+
+                    if waiting_for_start:
+
+                        menu_selected = 0
+
+                    elif paused:
+
+                        pause_selected = 0
+
+                    elif game_over:
+
+                        game_over_selected = 0
+
+                continue
 
             if waiting_for_start:
 
@@ -3065,29 +4058,38 @@ while running:
                         menu_selected - 1
                     ) % len(menu_options)
 
+                    play_menu_move()
+
                 elif event.key == pygame.K_DOWN:
 
                     menu_selected = (
                         menu_selected + 1
                     ) % len(menu_options)
 
+                    play_menu_move()
+
                 elif event.key == pygame.K_RETURN:
 
-                    if menu_options[
-                        menu_selected
-                    ] == "PLAY":
+                    selected_option = (
+                        menu_options[
+                            menu_selected
+                        ]
+                    )
+
+                    play_menu_select()
+
+                    if selected_option == "PLAY":
 
                         waiting_for_start = False
 
-                    elif menu_options[
-                        menu_selected
-                    ] == "QUIT":
+                    elif selected_option == "SETTINGS":
+
+                        settings_open = True
+                        settings_selected = 0
+
+                    elif selected_option == "QUIT":
 
                         running = False
-
-            # ---------------------------------------------
-            # GAME OVER MENU
-            # ---------------------------------------------
 
             elif game_over:
 
@@ -3097,33 +4099,44 @@ while running:
                         game_over_selected - 1
                     ) % len(game_over_options)
 
+                    play_menu_move()
+
                 elif event.key == pygame.K_DOWN:
 
                     game_over_selected = (
                         game_over_selected + 1
                     ) % len(game_over_options)
 
+                    play_menu_move()
+
                 elif event.key == pygame.K_RETURN:
 
-                    if game_over_options[
-                        game_over_selected
-                    ] == "QUIT":
+                    selected_option = (
+                        game_over_options[
+                            game_over_selected
+                        ]
+                    )
+
+                    play_menu_select()
+
+                    if selected_option == "QUIT":
 
                         running = False
 
-                    elif game_over_options[
-                        game_over_selected
-                    ] == "PLAY AGAIN":
+                    elif selected_option == "PLAY AGAIN":
 
                         reset_game()
 
+                    elif selected_option == "SETTINGS":
+
+                        settings_open = True
+                        settings_selected = 0
+
                 elif event.key == pygame.K_ESCAPE:
 
-                    running = False
+                    play_menu_pause()
 
-            # ---------------------------------------------
-            # PAUSE MENU
-            # ---------------------------------------------
+                    running = False
 
             elif paused:
 
@@ -3133,11 +4146,15 @@ while running:
                         pause_selected - 1
                     ) % len(pause_options)
 
+                    play_menu_move()
+
                 elif event.key == pygame.K_DOWN:
 
                     pause_selected = (
                         pause_selected + 1
                     ) % len(pause_options)
+
+                    play_menu_move()
 
                 elif event.key == pygame.K_RETURN:
 
@@ -3147,6 +4164,8 @@ while running:
                         ]
                     )
 
+                    play_menu_select()
+
                     if selected_option == "RESUME":
 
                         paused = False
@@ -3155,17 +4174,20 @@ while running:
 
                         reset_game()
 
+                    elif selected_option == "SETTINGS":
+
+                        settings_open = True
+                        settings_selected = 0
+
                     elif selected_option == "QUIT":
 
                         running = False
 
                 elif event.key == pygame.K_ESCAPE:
 
-                    paused = False
+                    play_menu_pause()
 
-            # ---------------------------------------------
-            # ACTIVE GAME
-            # ---------------------------------------------
+                    paused = False
 
             else:
 
@@ -3174,17 +4196,16 @@ while running:
                     paused = True
                     pause_selected = 0
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+                    play_menu_pause()
 
-            # ---------------------------------------------
-            # HUMAN SHOOT
-            # ---------------------------------------------
+        elif event.type == pygame.MOUSEBUTTONDOWN:
 
             if (
                 event.button == 1
                 and not waiting_for_start
                 and not game_over
                 and not paused
+                and not settings_open
                 and current_player == PLAYER_HUMAN
                 and not shot_pending
                 and not shot_in_progress
@@ -3193,14 +4214,11 @@ while running:
 
                 fire_human_shot()
 
-            # ---------------------------------------------
-            # POWER UP
-            # ---------------------------------------------
-
             elif (
                 event.button == 4
                 and current_player == PLAYER_HUMAN
                 and not paused
+                and not settings_open
                 and not game_over
             ):
 
@@ -3209,14 +4227,11 @@ while running:
                     human_power + 0.5
                 )
 
-            # ---------------------------------------------
-            # POWER DOWN
-            # ---------------------------------------------
-
             elif (
                 event.button == 5
                 and current_player == PLAYER_HUMAN
                 and not paused
+                and not settings_open
                 and not game_over
             ):
 
@@ -3233,19 +4248,12 @@ while running:
         not waiting_for_start
         and not game_over
         and not paused
+        and not settings_open
     ):
-
-        # -------------------------------------------------
-        # AI TURN
-        # -------------------------------------------------
 
         if current_player == PLAYER_AI:
 
             start_ai_turn()
-
-        # -------------------------------------------------
-        # AI PREVIEW
-        # -------------------------------------------------
 
         if shot_pending:
 
@@ -3255,29 +4263,43 @@ while running:
 
                 fire_ai_shot()
 
-        # -------------------------------------------------
-        # PHYSICS
-        # -------------------------------------------------
-
         if (
             shot_in_progress
             and not all_balls_stopped(balls)
         ):
+
+            previous_first_hit = cue_ball.first_hit_number
 
             pocketed = update_physics(
                 balls,
                 table
             )
 
+            # -------------------------------------------------
+            # FIRST BALL HIT
+            # -------------------------------------------------
+
+            if (
+                not shot_hit_sound_played
+                and cue_ball.first_hit_number is not None
+                and previous_first_hit is None
+            ):
+
+                play_ball_hit()
+
+                shot_hit_sound_played = True
+
+            # -------------------------------------------------
+            # BALL POCKET
+            # -------------------------------------------------
+
             if pocketed:
+
+                play_ball_pocket()
 
                 shot_pocketed.extend(
                     pocketed
                 )
-
-        # -------------------------------------------------
-        # SHOT FINISHED
-        # -------------------------------------------------
 
         if (
             shot_in_progress
@@ -3308,21 +4330,9 @@ while running:
             screen
         )
 
-    # -----------------------------------------------------
-    # HUMAN AIM
-    # -----------------------------------------------------
-
     draw_human_aim()
 
-    # -----------------------------------------------------
-    # AI AIM
-    # -----------------------------------------------------
-
     draw_ai_prediction()
-
-    # -----------------------------------------------------
-    # HUD
-    # -----------------------------------------------------
 
     if not waiting_for_start:
 
@@ -3330,33 +4340,35 @@ while running:
 
         draw_game_status()
 
-    # -----------------------------------------------------
-    # START SCREEN
-    # -----------------------------------------------------
-
     if waiting_for_start:
 
-        draw_start_screen()
+        if settings_open:
 
-    # -----------------------------------------------------
-    # GAME OVER
-    # -----------------------------------------------------
+            draw_settings_screen()
+
+        else:
+
+            draw_start_screen()
 
     elif game_over:
 
-        draw_game_over()
+        if settings_open:
 
-    # -----------------------------------------------------
-    # PAUSE
-    # -----------------------------------------------------
+            draw_settings_screen()
+
+        else:
+
+            draw_game_over()
 
     elif paused:
 
-        draw_pause_menu()
+        if settings_open:
 
-    # =====================================================
-    # DISPLAY
-    # =====================================================
+            draw_settings_screen()
+
+        else:
+
+            draw_pause_menu()
 
     pygame.display.flip()
 
@@ -3364,5 +4376,11 @@ while running:
 # =========================================================
 # CLEANUP
 # =========================================================
+
+if mixer_available:
+
+    pygame.mixer.music.stop()
+
+    pygame.mixer.quit()
 
 pygame.quit()
