@@ -72,6 +72,11 @@ PANEL_BORDER = (70, 70, 75)
 STATUS_GREEN = (100, 220, 150)
 STATUS_BLUE = (120, 180, 255)
 
+# Empty ball silhouette
+EMPTY_BALL_FILL = (20, 20, 23)
+EMPTY_BALL_BORDER = (85, 85, 90)
+EMPTY_BALL_INNER = (48, 48, 52)
+
 
 # =========================================================
 # TABLE
@@ -864,95 +869,321 @@ def draw_panel(
     )
 
 
-def draw_group_badge(
+# =========================================================
+# BALL HUD
+# =========================================================
+
+def draw_hud_ball(
     x,
     y,
-    group,
-    align="left"
+    number,
+    radius=10
 ):
 
-    font = pygame.font.SysFont(
+    color = BALL_COLORS.get(
+        number,
+        GREY
+    )
+
+    is_stripe = (
+        number in stripe_numbers()
+    )
+
+    # -----------------------------------------------------
+    # STRIPED BALL
+    # -----------------------------------------------------
+
+    if is_stripe:
+
+        pygame.draw.circle(
+            screen,
+            WHITE,
+            (
+                int(x),
+                int(y)
+            ),
+            radius
+        )
+
+        stripe_height = max(
+            4,
+            radius // 2
+        )
+
+        pygame.draw.rect(
+            screen,
+            color,
+            (
+                int(x - radius),
+                int(y - stripe_height // 2),
+                radius * 2,
+                stripe_height
+            )
+        )
+
+        pygame.draw.circle(
+            screen,
+            (35, 35, 38),
+            (
+                int(x),
+                int(y)
+            ),
+            radius,
+            1
+        )
+
+    # -----------------------------------------------------
+    # SOLID BALL
+    # -----------------------------------------------------
+
+    else:
+
+        pygame.draw.circle(
+            screen,
+            color,
+            (
+                int(x),
+                int(y)
+            ),
+            radius
+        )
+
+        pygame.draw.circle(
+            screen,
+            (35, 35, 38),
+            (
+                int(x),
+                int(y)
+            ),
+            radius,
+            1
+        )
+
+    # -----------------------------------------------------
+    # NUMBER
+    # -----------------------------------------------------
+
+    number_font = pygame.font.SysFont(
         "arial",
-        12,
+        7,
         bold=True
     )
 
+    number_surface = number_font.render(
+        str(number),
+        True,
+        (20, 20, 20)
+    )
+
+    number_rect = number_surface.get_rect(
+        center=(
+            int(x),
+            int(y)
+        )
+    )
+
+    screen.blit(
+        number_surface,
+        number_rect
+    )
+
+
+def draw_empty_hud_ball(
+    x,
+    y,
+    radius=10
+):
+
+    # Outer empty silhouette
+    pygame.draw.circle(
+        screen,
+        EMPTY_BALL_FILL,
+        (
+            int(x),
+            int(y)
+        ),
+        radius
+    )
+
+    pygame.draw.circle(
+        screen,
+        EMPTY_BALL_BORDER,
+        (
+            int(x),
+            int(y)
+        ),
+        radius,
+        1
+    )
+
+    # Inner subtle circle
+    pygame.draw.circle(
+        screen,
+        EMPTY_BALL_INNER,
+        (
+            int(x),
+            int(y)
+        ),
+        max(
+            2,
+            radius - 4
+        ),
+        1
+    )
+
+
+def get_hud_ball_numbers(group):
+
     if group == "solid":
 
-        label = "SOLIDS"
-        color = SOLID_COLOR
+        return list(
+            range(1, 8)
+        )
 
-    elif group == "stripe":
+    if group == "stripe":
 
-        label = "STRIPES"
-        color = STRIPE_COLOR
+        return list(
+            range(9, 16)
+        )
 
-    else:
+    return []
 
-        label = "OPEN"
-        color = TEXT_SECONDARY
+
+def draw_group_balls(
+    x,
+    y,
+    group,
+    ball_radius=10,
+    spacing=25
+):
+
+    # -----------------------------------------------------
+    # GROUP NOT ASSIGNED
+    # -----------------------------------------------------
+
+    if group is None:
+
+        for index in range(7):
+
+            draw_empty_hud_ball(
+                x + index * spacing,
+                y,
+                ball_radius
+            )
+
+        return
+
+    # -----------------------------------------------------
+    # GROUP ASSIGNED
+    # -----------------------------------------------------
+
+    numbers = get_hud_ball_numbers(
+        group
+    )
+
+    remaining = set(
+        remaining_numbers(group)
+    )
+
+    # -----------------------------------------------------
+    # DRAW REMAINING GROUP BALLS
+    # -----------------------------------------------------
+
+    for index, number in enumerate(numbers):
+
+        if number in remaining:
+
+            draw_hud_ball(
+                x + index * spacing,
+                y,
+                number,
+                ball_radius
+            )
+
+        else:
+
+            # Pocketed ball:
+            # leave its position empty.
+            draw_empty_hud_ball(
+                x + index * spacing,
+                y,
+                ball_radius
+            )
+
+    # -----------------------------------------------------
+    # ALL GROUP BALLS CLEARED
+    # -----------------------------------------------------
+
+    if not remaining:
+
+        # Replace the first silhouette with the 8-ball
+        draw_hud_eight_ball(
+            x,
+            y,
+            ball_radius
+        )
+
+
+def draw_hud_eight_ball(
+    x,
+    y,
+    radius=10
+):
+
+    pygame.draw.circle(
+        screen,
+        (15, 15, 17),
+        (
+            int(x),
+            int(y)
+        ),
+        radius
+    )
+
+    pygame.draw.circle(
+        screen,
+        (85, 85, 90),
+        (
+            int(x),
+            int(y)
+        ),
+        radius,
+        1
+    )
+
+    # White number circle
+    inner_radius = max(
+        4,
+        radius - 4
+    )
+
+    pygame.draw.circle(
+        screen,
+        WHITE,
+        (
+            int(x),
+            int(y)
+        ),
+        inner_radius
+    )
+
+    font = pygame.font.SysFont(
+        "arial",
+        7,
+        bold=True
+    )
 
     text = font.render(
-        label,
+        "8",
         True,
-        color
-    )
-
-    padding_x = 8
-    padding_y = 4
-
-    width = (
-        text.get_width() +
-        padding_x * 2
-    )
-
-    height = (
-        text.get_height() +
-        padding_y * 2
-    )
-
-    rect = pygame.Rect(
-        0,
-        0,
-        width,
-        height
-    )
-
-    if align == "right":
-
-        rect.topright = (
-            x,
-            y
-        )
-
-    else:
-
-        rect.topleft = (
-            x,
-            y
-        )
-
-    pygame.draw.rect(
-        screen,
-        (
-            25,
-            25,
-            28
-        ),
-        rect,
-        border_radius=6
-    )
-
-    pygame.draw.rect(
-        screen,
-        color,
-        rect,
-        1,
-        border_radius=6
+        (15, 15, 15)
     )
 
     text_rect = text.get_rect(
-        center=rect.center
+        center=(
+            int(x),
+            int(y)
+        )
     )
 
     screen.blit(
@@ -961,63 +1192,45 @@ def draw_group_badge(
     )
 
 
-def draw_remaining_balls(
+def draw_group_label(
     x,
     y,
-    group,
-    align="left"
+    group
 ):
-
-    numbers = remaining_numbers(
-        group
-    )
-
-    if group is None:
-
-        count = (
-            sum(
-                1
-                for ball in balls
-                if (
-                    ball.active
-                    and not ball.is_cue
-                    and ball.number != 8
-                )
-            )
-        )
-
-    else:
-
-        count = len(numbers)
 
     font = pygame.font.SysFont(
         "arial",
-        12
+        10,
+        bold=True
     )
 
-    text = font.render(
-        f"{count} LEFT",
-        True,
-        TEXT_SECONDARY
-    )
+    if group == "solid":
 
-    if align == "right":
+        text = "SOLIDS"
+        color = SOLID_COLOR
 
-        rect = text.get_rect(
-            top=y,
-            right=x
-        )
+    elif group == "stripe":
+
+        text = "STRIPES"
+        color = STRIPE_COLOR
 
     else:
 
-        rect = text.get_rect(
-            top=y,
-            left=x
-        )
+        text = "OPEN TABLE"
+        color = TEXT_SECONDARY
+
+    surface = font.render(
+        text,
+        True,
+        color
+    )
 
     screen.blit(
-        text,
-        rect
+        surface,
+        (
+            x,
+            y
+        )
     )
 
 
@@ -1079,7 +1292,7 @@ def draw_game_status():
     rect = text_surface.get_rect(
         center=(
             WINDOW_WIDTH // 2,
-            TABLE_Y + 585
+            TABLE_Y - 27
         )
     )
 
@@ -1227,10 +1440,16 @@ def draw_hud():
         )
     )
 
-    draw_group_badge(
-        player_x,
-        57,
-        player_group
+    # =====================================================
+    # PLAYER BALLS
+    # =====================================================
+
+    draw_group_balls(
+        player_x + 10,
+        66,
+        player_group,
+        ball_radius=7,
+        spacing=18
     )
 
     # =====================================================
@@ -1238,24 +1457,6 @@ def draw_hud():
     # =====================================================
 
     center_x = WINDOW_WIDTH // 2
-
-    your_balls = normal_font.render(
-        "YOUR BALLS",
-        True,
-        TEXT_SECONDARY
-    )
-
-    your_balls_rect = your_balls.get_rect(
-        center=(
-            center_x,
-            18
-        )
-    )
-
-    screen.blit(
-        your_balls,
-        your_balls_rect
-    )
 
     if player_group == "solid":
 
@@ -1281,42 +1482,13 @@ def draw_hud():
     group_rect = group_surface.get_rect(
         center=(
             center_x,
-            43
+            25
         )
     )
 
     screen.blit(
         group_surface,
         group_rect
-    )
-
-    if player_group is not None:
-
-        count_text = (
-            f"{len(remaining_numbers(player_group))}"
-            f" BALLS REMAINING"
-        )
-
-    else:
-
-        count_text = "CHOOSE YOUR GROUP"
-
-    count_surface = normal_font.render(
-        count_text,
-        True,
-        TEXT_SECONDARY
-    )
-
-    count_rect = count_surface.get_rect(
-        center=(
-            center_x,
-            64
-        )
-    )
-
-    screen.blit(
-        count_surface,
-        count_rect
     )
 
     # =====================================================
@@ -1367,11 +1539,30 @@ def draw_hud():
         ai_status_rect
     )
 
-    draw_group_badge(
-        right_x,
-        57,
+    # =====================================================
+    # AI BALLS
+    # =====================================================
+
+    ai_ball_numbers = (
+        get_hud_ball_numbers(ai_group)
+        if ai_group is not None
+        else list(range(7))
+    )
+
+    ai_start_x = (
+        right_x -
+        (
+            7 * 18
+        ) +
+        9
+    )
+
+    draw_group_balls(
+        ai_start_x,
+        66,
         ai_group,
-        align="right"
+        ball_radius=7,
+        spacing=18
     )
 
     # =====================================================
