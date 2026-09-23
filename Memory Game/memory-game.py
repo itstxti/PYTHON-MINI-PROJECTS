@@ -70,7 +70,9 @@ SYMBOL_SETS = {
 
 
 # Score Board
+
 class ScoreBoard:
+
     def __init__(self):
         self.scores = {
             difficulty: {
@@ -84,169 +86,314 @@ class ScoreBoard:
         self.load_scores()
 
     def load_scores(self):
+
         if not os.path.exists(SCORES_FILE):
             return
 
         try:
-            with open(SCORES_FILE, "r", encoding="utf-8") as file:
+            with open(
+                SCORES_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
                 data = json.load(file)
 
             if not isinstance(data, dict):
                 return
 
-            # Load only the new leaderboard format
-            for difficulty in DIFFICULTIES:
-                difficulty_data = data.get(difficulty)
+            # Load only valid entries from the new leaderboard format
 
-                if not isinstance(difficulty_data, dict):
+            for difficulty in DIFFICULTIES:
+
+                difficulty_data = data.get(
+                    difficulty
+                )
+
+                if not isinstance(
+                    difficulty_data,
+                    dict
+                ):
                     continue
 
                 for mode in MODES:
-                    scores = difficulty_data.get(mode, [])
 
-                    if isinstance(scores, list):
-                        self.scores[difficulty][mode] = scores[:5]
+                    scores = difficulty_data.get(
+                        mode,
+                        []
+                    )
 
-        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                    if not isinstance(
+                        scores,
+                        list
+                    ):
+                        continue
+
+                    valid_scores = []
+
+                    for score in scores:
+
+                        # Old entries may not contain "score".
+                        # Ignore them instead of causing a KeyError.
+
+                        if not isinstance(
+                            score,
+                            dict
+                        ):
+                            continue
+
+                        if (
+                            "name" not in score
+                            or "score" not in score
+                            or "time" not in score
+                        ):
+                            continue
+
+                        try:
+
+                            valid_scores.append({
+                                "name": str(
+                                    score["name"]
+                                ),
+                                "score": int(
+                                    score["score"]
+                                ),
+                                "time": float(
+                                    score["time"]
+                                )
+                            })
+
+                        except (
+                            TypeError,
+                            ValueError
+                        ):
+                            continue
+
+                    # Keep only the top 5
+
+                    valid_scores.sort(
+                        key=lambda item: (
+                            -item["score"],
+                            item["time"]
+                        )
+                    )
+
+                    self.scores[
+                        difficulty
+                    ][mode] = valid_scores[:5]
+
+        except (
+            OSError,
+            json.JSONDecodeError,
+            TypeError,
+            ValueError
+        ):
             pass
 
     def save_scores(self):
+
         try:
-            with open(SCORES_FILE, "w", encoding="utf-8") as file:
+            with open(
+                SCORES_FILE,
+                "w",
+                encoding="utf-8"
+            ) as file:
+
                 json.dump(
                     self.scores,
                     file,
                     indent=4,
                     ensure_ascii=False
                 )
+
         except OSError:
             pass
+
+    # Solo
 
     def add_solo_score(
         self,
         difficulty,
         name,
         time_taken,
-        attempts
+        score
     ):
-        score = {
+
+        score_data = {
             "name": name,
-            "time": round(time_taken, 2),
-            "attempts": attempts
+            "time": round(
+                time_taken,
+                2
+            ),
+            "score": score
         }
 
-        scores = self.scores[difficulty]["solo"]
+        scores = self.scores[
+            difficulty
+        ]["solo"]
 
-        scores.append(score)
+        scores.append(
+            score_data
+        )
 
-        # Primary: fewer attempts
+        # Primary: higher score
         # Tie-breaker: lower time
+
         scores.sort(
             key=lambda item: (
-                item["attempts"],
+                -item["score"],
                 item["time"]
             )
         )
 
-        self.scores[difficulty]["solo"] = scores[:5]
+        self.scores[
+            difficulty
+        ]["solo"] = scores[:5]
 
         self.save_scores()
+
+    # Two Players
 
     def add_vs_score(
         self,
         difficulty,
         player1,
-        player1_attempts,
+        player1_score,
         player1_time,
         player2,
-        player2_attempts,
+        player2_score,
         player2_time
     ):
+
         score1 = {
             "name": player1,
-            "attempts": player1_attempts,
-            "time": round(player1_time, 2)
+            "score": player1_score,
+            "time": round(
+                player1_time,
+                2
+            )
         }
 
         score2 = {
             "name": player2,
-            "attempts": player2_attempts,
-            "time": round(player2_time, 2)
+            "score": player2_score,
+            "time": round(
+                player2_time,
+                2
+            )
         }
 
-        scores = self.scores[difficulty]["vs"]
+        scores = self.scores[
+            difficulty
+        ]["vs"]
 
         # Each player gets an individual leaderboard entry
+
         scores.append(score1)
         scores.append(score2)
 
-        # Primary: fewer attempts
+        # Primary: higher score
         # Tie-breaker: lower time
+
         scores.sort(
             key=lambda item: (
-                item["attempts"],
+                -item["score"],
                 item["time"]
             )
         )
 
-        self.scores[difficulty]["vs"] = scores[:5]
+        self.scores[
+            difficulty
+        ]["vs"] = scores[:5]
 
         self.save_scores()
+
+    # Challenge
 
     def add_challenge_score(
         self,
         difficulty,
         name,
         time_taken,
-        attempts
+        score
     ):
-        score = {
+
+        score_data = {
             "name": name,
-            "time": round(time_taken, 2),
-            "attempts": attempts
+            "time": round(
+                time_taken,
+                2
+            ),
+            "score": score
         }
 
-        scores = self.scores[difficulty]["challenge"]
+        scores = self.scores[
+            difficulty
+        ]["challenge"]
 
-        scores.append(score)
+        scores.append(
+            score_data
+        )
 
-        # Primary: lower time
-        # Tie-breaker: fewer attempts
+        # Primary: higher score
+        # Tie-breaker: lower time
+
         scores.sort(
             key=lambda item: (
-                item["time"],
-                item["attempts"]
+                -item["score"],
+                item["time"]
             )
         )
 
-        self.scores[difficulty]["challenge"] = scores[:5]
+        self.scores[
+            difficulty
+        ]["challenge"] = scores[:5]
 
         self.save_scores()
 
-    def get_scores(self, difficulty, mode):
-        return self.scores[difficulty][mode]
+    def get_scores(
+        self,
+        difficulty,
+        mode
+    ):
+        return self.scores[
+            difficulty
+        ][mode]
 
 
 # Memory Game
+
 class MemoryGame:
+
     def __init__(self, root):
+
         self.root = root
 
-        self.root.title("Memory Game")
+        self.root.title(
+            "Memory Game"
+        )
+
         self.root.geometry(
             f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}"
         )
+
         self.root.minsize(
             WINDOW_WIDTH,
             WINDOW_HEIGHT
         )
+
         self.root.maxsize(
             WINDOW_WIDTH,
             WINDOW_HEIGHT
         )
-        self.root.resizable(False, False)
+
+        self.root.resizable(
+            False,
+            False
+        )
 
         # Colors
+
         self.bg_color = "#f5f5f7"
         self.card_color = "#ffffff"
         self.card_back = "#dce8f5"
@@ -273,23 +420,32 @@ class MemoryGame:
         self.board = []
         self.cards = []
 
+        # Attempts are still used internally
         self.attempts = 0
         self.player_attempts = [0, 0]
+
+        # Score = number of pairs found
+        self.player_scores = [0, 0]
 
         self.start_time = None
         self.game_finished = False
 
         # Two-player timing
+
         self.player_times = [0.0, 0.0]
         self.turn_start_time = None
 
         # Challenge timer
+
         self.remaining_time = 0
         self.timer_job = None
 
         self.show_main_menu()
+
     # General UI
+
     def clear_screen(self):
+
         self.stop_timer()
 
         for widget in self.root.winfo_children():
@@ -303,6 +459,7 @@ class MemoryGame:
         width=20,
         font=("Segoe UI", 12, "bold")
     ):
+
         return tk.Button(
             parent,
             text=text,
@@ -319,8 +476,11 @@ class MemoryGame:
             padx=10,
             pady=10
         )
+
     # Main Menu
+
     def show_main_menu(self):
+
         self.stop_timer()
 
         self.clear_screen()
@@ -332,6 +492,7 @@ class MemoryGame:
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -344,16 +505,25 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
-        title.pack(pady=(110, 10))
+
+        title.pack(
+            pady=(110, 10)
+        )
 
         subtitle = tk.Label(
             frame,
-            text="Test your memory and climb the leaderboard",
+            text=(
+                "Test your memory and climb "
+                "the leaderboard"
+            ),
             font=("Segoe UI", 13),
             bg=self.bg_color,
             fg=self.secondary_text
         )
-        subtitle.pack(pady=(0, 50))
+
+        subtitle.pack(
+            pady=(0, 50)
+        )
 
         play_button = self.create_button(
             frame,
@@ -361,7 +531,10 @@ class MemoryGame:
             self.show_difficulty_menu,
             width=22
         )
-        play_button.pack(pady=8)
+
+        play_button.pack(
+            pady=8
+        )
 
         scores_button = self.create_button(
             frame,
@@ -369,7 +542,10 @@ class MemoryGame:
             self.show_difficulty_scores,
             width=22
         )
-        scores_button.pack(pady=8)
+
+        scores_button.pack(
+            pady=8
+        )
 
         exit_button = self.create_button(
             frame,
@@ -377,15 +553,22 @@ class MemoryGame:
             self.root.destroy,
             width=22
         )
-        exit_button.pack(pady=8)
+
+        exit_button.pack(
+            pady=8
+        )
+
     # Difficulty Menu
+
     def show_difficulty_menu(self):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -398,7 +581,10 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
-        title.pack(pady=(90, 15))
+
+        title.pack(
+            pady=(90, 15)
+        )
 
         subtitle = tk.Label(
             frame,
@@ -407,16 +593,24 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.secondary_text
         )
-        subtitle.pack(pady=(0, 40))
+
+        subtitle.pack(
+            pady=(0, 40)
+        )
 
         for difficulty in DIFFICULTIES:
+
             button = self.create_button(
                 frame,
                 difficulty,
-                lambda d=difficulty: self.select_difficulty(d),
+                lambda d=difficulty:
+                    self.select_difficulty(d),
                 width=22
             )
-            button.pack(pady=7)
+
+            button.pack(
+                pady=7
+            )
 
         back_button = self.create_button(
             frame,
@@ -424,19 +618,31 @@ class MemoryGame:
             self.show_main_menu,
             width=22
         )
-        back_button.pack(pady=(25, 7))
 
-    def select_difficulty(self, difficulty):
+        back_button.pack(
+            pady=(25, 7)
+        )
+
+    def select_difficulty(
+        self,
+        difficulty
+    ):
+
         self.current_difficulty = difficulty
+
         self.show_mode_menu()
+
     # Mode Menu
+
     def show_mode_menu(self):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -449,7 +655,10 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
-        title.pack(pady=(90, 15))
+
+        title.pack(
+            pady=(90, 15)
+        )
 
         difficulty_label = tk.Label(
             frame,
@@ -458,7 +667,10 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.accent_color
         )
-        difficulty_label.pack(pady=(0, 35))
+
+        difficulty_label.pack(
+            pady=(0, 35)
+        )
 
         solo_button = self.create_button(
             frame,
@@ -466,7 +678,10 @@ class MemoryGame:
             lambda: self.start_game("solo"),
             width=22
         )
-        solo_button.pack(pady=7)
+
+        solo_button.pack(
+            pady=7
+        )
 
         vs_button = self.create_button(
             frame,
@@ -474,7 +689,10 @@ class MemoryGame:
             lambda: self.start_game("vs"),
             width=22
         )
-        vs_button.pack(pady=7)
+
+        vs_button.pack(
+            pady=7
+        )
 
         challenge_button = self.create_button(
             frame,
@@ -482,7 +700,10 @@ class MemoryGame:
             lambda: self.start_game("challenge"),
             width=22
         )
-        challenge_button.pack(pady=7)
+
+        challenge_button.pack(
+            pady=7
+        )
 
         back_button = self.create_button(
             frame,
@@ -490,23 +711,39 @@ class MemoryGame:
             self.show_difficulty_menu,
             width=22
         )
-        back_button.pack(pady=(25, 7))
+
+        back_button.pack(
+            pady=(25, 7)
+        )
+
     # Start Game
-    def start_game(self, mode):
+
+    def start_game(
+        self,
+        mode
+    ):
+
         self.current_mode = mode
 
-        # Choose a random symbol category for every new game
+        # Choose a random symbol category
+        # for every new game
+
         self.current_symbol_category = random.choice(
             list(SYMBOL_SETS.keys())
         )
 
         if mode == "vs":
+
             self.ask_player_names()
+
         else:
+
             self.players = ["Player"]
+
             self.show_game_screen()
 
     def ask_player_names(self):
+
         player1 = simpledialog.askstring(
             "Player 1",
             "Enter Player 1 name:",
@@ -541,8 +778,11 @@ class MemoryGame:
         ]
 
         self.show_game_screen()
+
     # Game Screen
+
     def show_game_screen(self):
+
         self.clear_screen()
 
         settings = DIFFICULTIES[
@@ -558,6 +798,10 @@ class MemoryGame:
         self.attempts = 0
         self.player_attempts = [0, 0]
 
+        # Reset scores
+
+        self.player_scores = [0, 0]
+
         self.current_player = 0
 
         self.game_finished = False
@@ -565,13 +809,18 @@ class MemoryGame:
         self.player_times = [0.0, 0.0]
 
         self.start_time = time.time()
-        self.remaining_time = settings["time_limit"]
+
+        self.remaining_time = settings[
+            "time_limit"
+        ]
 
         # Main game container
+
         game_frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         game_frame.pack(
             fill="both",
             expand=True
@@ -584,6 +833,7 @@ class MemoryGame:
             bg=self.bg_color,
             height=75
         )
+
         header_frame.pack(
             fill="x",
             padx=20,
@@ -593,6 +843,7 @@ class MemoryGame:
         header_frame.pack_propagate(False)
 
         # Menu button
+
         menu_button = tk.Button(
             header_frame,
             text="← Menu",
@@ -635,6 +886,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
+
         title.pack()
 
         mode_text = {
@@ -654,6 +906,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.secondary_text
         )
+
         mode_label.pack(
             pady=(2, 0)
         )
@@ -664,6 +917,7 @@ class MemoryGame:
             game_frame,
             bg=self.bg_color
         )
+
         info_frame.pack(
             fill="x",
             padx=30,
@@ -679,15 +933,17 @@ class MemoryGame:
                 bg=self.bg_color,
                 fg=self.text_color
             )
+
             self.info_label.pack()
 
             self.attempts_label = tk.Label(
                 info_frame,
-                text="Attempts: 0",
+                text="Score: 0",
                 font=("Segoe UI", 10),
                 bg=self.bg_color,
                 fg=self.secondary_text
             )
+
             self.attempts_label.pack(
                 pady=(2, 0)
             )
@@ -704,15 +960,17 @@ class MemoryGame:
                 bg=self.bg_color,
                 fg=self.accent_color
             )
+
             self.info_label.pack()
 
             self.attempts_label = tk.Label(
                 info_frame,
-                text="Attempts: 0",
+                text="Score: 0",
                 font=("Segoe UI", 10),
                 bg=self.bg_color,
                 fg=self.secondary_text
             )
+
             self.attempts_label.pack(
                 pady=(2, 0)
             )
@@ -726,15 +984,17 @@ class MemoryGame:
                 bg=self.bg_color,
                 fg=self.accent_color
             )
+
             self.info_label.pack()
 
             self.attempts_label = tk.Label(
                 info_frame,
-                text="Attempts: 0",
+                text="Score: 0",
                 font=("Segoe UI", 10),
                 bg=self.bg_color,
                 fg=self.secondary_text
             )
+
             self.attempts_label.pack(
                 pady=(2, 0)
             )
@@ -745,6 +1005,7 @@ class MemoryGame:
             game_frame,
             bg=self.bg_color
         )
+
         board_container.pack(
             fill="both",
             expand=True,
@@ -757,6 +1018,7 @@ class MemoryGame:
             bg=self.bg_color,
             highlightthickness=0
         )
+
         self.board_canvas.pack(
             fill="both",
             expand=True
@@ -765,19 +1027,23 @@ class MemoryGame:
         self.create_board()
 
         if self.current_mode == "vs":
+
             self.turn_start_time = time.time()
 
         self.update_game_info()
 
         if self.current_mode == "challenge":
+
             self.update_challenge_timer()
 
         elif self.current_mode == "solo":
+
             self.update_solo_timer()
 
     # Board Creation
 
     def create_board(self):
+
         settings = DIFFICULTIES[
             self.current_difficulty
         ]
@@ -785,13 +1051,17 @@ class MemoryGame:
         rows = settings["rows"]
         cols = settings["cols"]
 
-        pair_count = (rows * cols) // 2
+        pair_count = (
+            rows * cols
+        ) // 2
 
         symbol_set = SYMBOL_SETS[
             self.current_symbol_category
         ]
 
-        selected_symbols = symbol_set[:pair_count]
+        selected_symbols = symbol_set[
+            :pair_count
+        ]
 
         deck = selected_symbols * 2
 
@@ -802,8 +1072,13 @@ class MemoryGame:
 
         self.root.update_idletasks()
 
-        canvas_width = self.board_canvas.winfo_width()
-        canvas_height = self.board_canvas.winfo_height()
+        canvas_width = (
+            self.board_canvas.winfo_width()
+        )
+
+        canvas_height = (
+            self.board_canvas.winfo_height()
+        )
 
         if canvas_width <= 1:
             canvas_width = 850
@@ -841,14 +1116,18 @@ class MemoryGame:
         )
 
         start_x = (
-            canvas_width - total_width
+            canvas_width -
+            total_width
         ) / 2
 
         start_y = (
-            canvas_height - total_height
+            canvas_height -
+            total_height
         ) / 2
 
-        for index in range(rows * cols):
+        for index in range(
+            rows * cols
+        ):
 
             row = index // cols
             col = index % cols
@@ -866,26 +1145,30 @@ class MemoryGame:
             x2 = x1 + card_size
             y2 = y1 + card_size
 
-            rectangle = self.board_canvas.create_rectangle(
-                x1,
-                y1,
-                x2,
-                y2,
-                fill=self.card_back,
-                outline=self.border_color,
-                width=1
+            rectangle = (
+                self.board_canvas.create_rectangle(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    fill=self.card_back,
+                    outline=self.border_color,
+                    width=1
+                )
             )
 
-            text = self.board_canvas.create_text(
-                (x1 + x2) / 2,
-                (y1 + y2) / 2,
-                text="?",
-                font=(
-                    "Segoe UI Emoji",
-                    int(card_size * 0.30),
-                    "bold"
-                ),
-                fill=self.text_color
+            text = (
+                self.board_canvas.create_text(
+                    (x1 + x2) / 2,
+                    (y1 + y2) / 2,
+                    text="?",
+                    font=(
+                        "Segoe UI Emoji",
+                        int(card_size * 0.30),
+                        "bold"
+                    ),
+                    fill=self.text_color
+                )
             )
 
             self.cards.append({
@@ -916,6 +1199,7 @@ class MemoryGame:
     # Card Interaction
 
     def click_card(self, index):
+
         if self.game_finished:
             return
 
@@ -950,16 +1234,15 @@ class MemoryGame:
 
         if len(self.showing_cards) == 2:
 
+            # Attempts are still counted internally
+
             self.attempts += 1
 
             if self.current_mode == "vs":
+
                 self.player_attempts[
                     self.current_player
                 ] += 1
-
-            self.attempts_label.config(
-                text=f"Attempts: {self.attempts}"
-            )
 
             first = self.showing_cards[0]
             second = self.showing_cards[1]
@@ -982,7 +1265,12 @@ class MemoryGame:
 
     # Match
 
-    def handle_match(self, first, second):
+    def handle_match(
+        self,
+        first,
+        second
+    ):
+
         self.matched_cards.add(first)
         self.matched_cards.add(second)
 
@@ -999,18 +1287,37 @@ class MemoryGame:
             fill="#dff7e5"
         )
 
+        # Add one point for the found pair
+
+        if self.current_mode == "vs":
+
+            self.player_scores[
+                self.current_player
+            ] += 1
+
         self.showing_cards = []
 
+        self.update_game_info()
+
         if len(self.matched_cards) == len(self.board):
+
             self.finish_game()
 
     # Hide Mismatched Pair
 
-    def hide_pair(self, first, second):
+    def hide_pair(
+        self,
+        first,
+        second
+    ):
+
         if self.game_finished:
             return
 
-        for index in (first, second):
+        for index in (
+            first,
+            second
+        ):
 
             card = self.cards[index]
 
@@ -1035,21 +1342,28 @@ class MemoryGame:
         # Switch player only in Two Players mode
 
         if self.current_mode == "vs":
+
             self.switch_player()
 
     # Two Player Turn
 
     def switch_player(self):
+
         now = time.time()
 
         if self.turn_start_time is not None:
+
             self.player_times[
                 self.current_player
             ] += (
-                now - self.turn_start_time
+                now -
+                self.turn_start_time
             )
 
-        self.current_player = 1 - self.current_player
+        self.current_player = (
+            1 -
+            self.current_player
+        )
 
         self.turn_start_time = now
 
@@ -1058,6 +1372,7 @@ class MemoryGame:
     # Game Information
 
     def update_game_info(self):
+
         if self.game_finished:
             return
 
@@ -1073,11 +1388,11 @@ class MemoryGame:
 
             self.attempts_label.config(
                 text=(
-                    f"Attempts: {self.attempts}   •   "
+                    f"Score: {self.player_scores[0]}   •   "
                     f"{self.players[0]}: "
-                    f"{self.player_attempts[0]}   "
+                    f"{self.player_scores[0]}   "
                     f"{self.players[1]}: "
-                    f"{self.player_attempts[1]}"
+                    f"{self.player_scores[1]}"
                 )
             )
 
@@ -1085,6 +1400,15 @@ class MemoryGame:
 
             self.info_label.config(
                 text=f"Time: {self.remaining_time}s"
+            )
+
+            score = (
+                len(self.matched_cards)
+                // 2
+            )
+
+            self.attempts_label.config(
+                text=f"Score: {score}"
             )
 
         else:
@@ -1098,9 +1422,19 @@ class MemoryGame:
                 text=f"Time: {elapsed:.2f}s"
             )
 
+            score = (
+                len(self.matched_cards)
+                // 2
+            )
+
+            self.attempts_label.config(
+                text=f"Score: {score}"
+            )
+
     # Solo Timer
 
     def update_solo_timer(self):
+
         if self.game_finished:
             return
 
@@ -1124,6 +1458,7 @@ class MemoryGame:
     # Challenge Timer
 
     def update_challenge_timer(self):
+
         if self.game_finished:
             return
 
@@ -1151,8 +1486,19 @@ class MemoryGame:
             text=f"Time: {remaining}s"
         )
 
+        score = (
+            len(self.matched_cards)
+            // 2
+        )
+
+        self.attempts_label.config(
+            text=f"Score: {score}"
+        )
+
         if remaining <= 0:
+
             self.time_expired()
+
             return
 
         self.timer_job = self.root.after(
@@ -1163,9 +1509,11 @@ class MemoryGame:
     # Stop Timer
 
     def stop_timer(self):
+
         if self.timer_job is not None:
 
             try:
+
                 self.root.after_cancel(
                     self.timer_job
                 )
@@ -1181,6 +1529,7 @@ class MemoryGame:
     # Time Expired
 
     def time_expired(self):
+
         if self.game_finished:
             return
 
@@ -1198,12 +1547,14 @@ class MemoryGame:
         )
 
     def show_time_expired_screen(self):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -1216,32 +1567,40 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.danger_color
         )
+
         title.pack(
             pady=(150, 15)
+        )
+
+        score = (
+            len(self.matched_cards)
+            // 2
         )
 
         subtitle = tk.Label(
             frame,
             text=(
                 f"You completed "
-                f"{len(self.matched_cards) // 2} pairs."
+                f"{score} pairs."
             ),
             font=("Segoe UI", 14),
             bg=self.bg_color,
             fg=self.secondary_text
         )
+
         subtitle.pack(
             pady=10
         )
 
-        attempts = tk.Label(
+        score_label = tk.Label(
             frame,
-            text=f"Attempts: {self.attempts}",
+            text=f"Score: {score}",
             font=("Segoe UI", 12),
             bg=self.bg_color,
             fg=self.text_color
         )
-        attempts.pack(
+
+        score_label.pack(
             pady=5
         )
 
@@ -1251,6 +1610,7 @@ class MemoryGame:
             self.show_main_menu,
             width=22
         )
+
         menu_button.pack(
             pady=(35, 8)
         )
@@ -1261,6 +1621,7 @@ class MemoryGame:
             self.restart_game,
             width=22
         )
+
         retry_button.pack(
             pady=8
         )
@@ -1268,6 +1629,7 @@ class MemoryGame:
     # Finish Game
 
     def finish_game(self):
+
         if self.game_finished:
             return
 
@@ -1280,10 +1642,12 @@ class MemoryGame:
             now = time.time()
 
             if self.turn_start_time is not None:
+
                 self.player_times[
                     self.current_player
                 ] += (
-                    now - self.turn_start_time
+                    now -
+                    self.turn_start_time
                 )
 
         total_time = (
@@ -1292,21 +1656,28 @@ class MemoryGame:
         )
 
         if self.current_mode == "solo":
+
             self.show_solo_result(
                 total_time
             )
 
         elif self.current_mode == "vs":
+
             self.show_vs_result()
 
         elif self.current_mode == "challenge":
+
             self.show_challenge_result(
                 total_time
             )
 
     # Solo Result
 
-    def show_solo_result(self, total_time):
+    def show_solo_result(
+        self,
+        total_time
+    ):
+
         name = simpledialog.askstring(
             "Game Complete",
             "Enter your name for the leaderboard:",
@@ -1321,18 +1692,23 @@ class MemoryGame:
         if not name:
             name = "Player"
 
+        score = (
+            len(self.matched_cards)
+            // 2
+        )
+
         self.scoreboard.add_solo_score(
             self.current_difficulty,
             name,
             total_time,
-            self.attempts
+            score
         )
 
         self.show_result_screen(
             title="You Win!",
             subtitle=f"Great job, {name}!",
             details=[
-                f"Attempts: {self.attempts}",
+                f"Score: {score}",
                 f"Time: {total_time:.2f}s"
             ]
         )
@@ -1340,54 +1716,56 @@ class MemoryGame:
     # Two Player Result
 
     def show_vs_result(self):
+
         player1 = self.players[0]
         player2 = self.players[1]
 
-        player1_attempts = (
-            self.player_attempts[0]
-        )
+        player1_score = self.player_scores[0]
+        player2_score = self.player_scores[1]
 
-        player2_attempts = (
-            self.player_attempts[1]
-        )
-
-        player1_time = (
-            self.player_times[0]
-        )
-
-        player2_time = (
-            self.player_times[1]
-        )
+        player1_time = self.player_times[0]
+        player2_time = self.player_times[1]
 
         self.scoreboard.add_vs_score(
             self.current_difficulty,
             player1,
-            player1_attempts,
+            player1_score,
             player1_time,
             player2,
-            player2_attempts,
+            player2_score,
             player2_time
         )
 
-        if player1_attempts < player2_attempts:
+        # Higher score wins
+
+        if player1_score > player2_score:
+
             winner = player1
 
-        elif player2_attempts < player1_attempts:
+        elif player2_score > player1_score:
+
             winner = player2
 
+        # Tie-breaker: lower time
+
         elif player1_time < player2_time:
+
             winner = player1
 
         elif player2_time < player1_time:
+
             winner = player2
 
         else:
+
             winner = "It's a tie!"
 
         if winner == "It's a tie!":
+
             title = "It's a Tie!"
 
         else:
+
             title = f"{winner} Wins!"
 
         self.show_result_screen(
@@ -1396,12 +1774,12 @@ class MemoryGame:
             details=[
                 (
                     f"{player1}: "
-                    f"{player1_attempts} attempts • "
+                    f"Score {player1_score} • "
                     f"{player1_time:.2f}s"
                 ),
                 (
                     f"{player2}: "
-                    f"{player2_attempts} attempts • "
+                    f"Score {player2_score} • "
                     f"{player2_time:.2f}s"
                 )
             ]
@@ -1409,7 +1787,11 @@ class MemoryGame:
 
     # Challenge Result
 
-    def show_challenge_result(self, total_time):
+    def show_challenge_result(
+        self,
+        total_time
+    ):
+
         name = simpledialog.askstring(
             "Challenge Complete",
             "Enter your name for the leaderboard:",
@@ -1424,19 +1806,24 @@ class MemoryGame:
         if not name:
             name = "Player"
 
+        score = (
+            len(self.matched_cards)
+            // 2
+        )
+
         self.scoreboard.add_challenge_score(
             self.current_difficulty,
             name,
             total_time,
-            self.attempts
+            score
         )
 
         self.show_result_screen(
             title="Challenge Complete!",
             subtitle=f"Well done, {name}!",
             details=[
-                f"Time: {total_time:.2f}s",
-                f"Attempts: {self.attempts}"
+                f"Score: {score}",
+                f"Time: {total_time:.2f}s"
             ]
         )
 
@@ -1448,12 +1835,14 @@ class MemoryGame:
         subtitle,
         details
     ):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -1466,6 +1855,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.success_color
         )
+
         title_label.pack(
             pady=(120, 10)
         )
@@ -1477,6 +1867,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.secondary_text
         )
+
         subtitle_label.pack(
             pady=(0, 35)
         )
@@ -1499,6 +1890,7 @@ class MemoryGame:
             frame,
             bg=self.bg_color
         )
+
         button_frame.pack(
             pady=40
         )
@@ -1509,6 +1901,7 @@ class MemoryGame:
             self.restart_game,
             width=18
         )
+
         play_again.pack(
             side="left",
             padx=8
@@ -1522,6 +1915,7 @@ class MemoryGame:
             ),
             width=18
         )
+
         scores_button.pack(
             side="left",
             padx=8
@@ -1533,6 +1927,7 @@ class MemoryGame:
             self.show_main_menu,
             width=22
         )
+
         menu_button.pack(
             pady=5
         )
@@ -1540,6 +1935,7 @@ class MemoryGame:
     # Restart
 
     def restart_game(self):
+
         self.start_game(
             self.current_mode
         )
@@ -1547,12 +1943,14 @@ class MemoryGame:
     # Top Scores - Difficulty Selection
 
     def show_difficulty_scores(self):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -1565,6 +1963,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
+
         title.pack(
             pady=(75, 10)
         )
@@ -1576,6 +1975,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.secondary_text
         )
+
         subtitle.pack(
             pady=(0, 35)
         )
@@ -1607,13 +2007,18 @@ class MemoryGame:
 
     # Top Scores
 
-    def show_top_scores(self, difficulty):
+    def show_top_scores(
+        self,
+        difficulty
+    ):
+
         self.clear_screen()
 
         frame = tk.Frame(
             self.root,
             bg=self.bg_color
         )
+
         frame.pack(
             fill="both",
             expand=True
@@ -1626,6 +2031,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.text_color
         )
+
         title.pack(
             pady=(35, 5)
         )
@@ -1637,6 +2043,7 @@ class MemoryGame:
             bg=self.bg_color,
             fg=self.accent_color
         )
+
         difficulty_label.pack(
             pady=(0, 20)
         )
@@ -1645,6 +2052,7 @@ class MemoryGame:
             frame,
             bg=self.bg_color
         )
+
         cards_frame.pack(
             fill="both",
             expand=True,
@@ -1677,6 +2085,7 @@ class MemoryGame:
             frame,
             bg=self.bg_color
         )
+
         navigation_frame.pack(
             pady=(5, 20)
         )
@@ -1687,6 +2096,7 @@ class MemoryGame:
             self.show_difficulty_scores,
             width=18
         )
+
         back_button.pack(
             side="left",
             padx=5
@@ -1698,6 +2108,7 @@ class MemoryGame:
             self.show_main_menu,
             width=18
         )
+
         menu_button.pack(
             side="left",
             padx=5
@@ -1706,12 +2117,13 @@ class MemoryGame:
     # Score Card
 
     def create_score_card(
-            self,
-            parent,
-            title,
-            mode,
-            difficulty
-        ):
+        self,
+        parent,
+        title,
+        mode,
+        difficulty
+    ):
+
         card = tk.Frame(
             parent,
             bg=self.card_color,
@@ -1726,7 +2138,7 @@ class MemoryGame:
             padx=5,
             pady=5
         )
-        
+
         card.pack_propagate(False)
 
         title_label = tk.Label(
@@ -1762,25 +2174,19 @@ class MemoryGame:
 
             return
 
-        if mode == "challenge":
+        self.create_standard_score_table(
+            card,
+            scores
+        )
 
-            self.create_challenge_score_table(
-                card,
-                scores
-            )
-
-        else:
-
-            self.create_standard_score_table(
-                card,
-                scores
-            )
+    # Standard Score Table
 
     def create_standard_score_table(
-            self,
-            parent,
-            scores
-        ):
+        self,
+        parent,
+        scores
+    ):
+
         table_frame = tk.Frame(
             parent,
             bg=self.card_color
@@ -1794,7 +2200,12 @@ class MemoryGame:
 
         header = tk.Label(
             table_frame,
-            text=f"{'#':<4}{'PLAYER':<14}{'ATT.':<8}{'TIME':>8}",
+            text=(
+                f"{'#':<4}"
+                f"{'PLAYER':<14}"
+                f"{'SCORE':<8}"
+                f"{'TIME':>8}"
+            ),
             font=("Consolas", 10, "bold"),
             bg=self.card_color,
             fg=self.secondary_text,
@@ -1806,66 +2217,18 @@ class MemoryGame:
             pady=(0, 8)
         )
 
-        for index, score in enumerate(scores, 1):
-
-            row = tk.Label(
-                table_frame,
-                text=(
-                    f"{index:<4}"
-                    f"{score['name']:<14}"
-                    f"{score['attempts']:<8}"
-                    f"{score['time']:>7.2f}s"
-                ),
-                font=("Consolas", 10),
-                bg=self.card_color,
-                fg=self.text_color,
-                anchor="w"
-            )
-
-            row.pack(
-                fill="x",
-                pady=2
-            )
-
-    def create_challenge_score_table(
-            self,
-            parent,
-            scores
+        for index, score in enumerate(
+            scores,
+            1
         ):
-        table_frame = tk.Frame(
-            parent,
-            bg=self.card_color
-        )
-
-        table_frame.pack(
-            fill="x",
-            padx=15,
-            pady=5
-        )
-
-        header = tk.Label(
-            table_frame,
-            text=f"{'#':<4}{'PLAYER':<14}{'TIME':>8}{'ATT.':>8}",
-            font=("Consolas", 10, "bold"),
-            bg=self.card_color,
-            fg=self.secondary_text,
-            anchor="w"
-        )
-
-        header.pack(
-            fill="x",
-            pady=(0, 8)
-        )
-
-        for index, score in enumerate(scores, 1):
 
             row = tk.Label(
                 table_frame,
                 text=(
                     f"{index:<4}"
                     f"{score['name']:<14}"
+                    f"{score['score']:<8}"
                     f"{score['time']:>7.2f}s"
-                    f"{score['attempts']:>8}"
                 ),
                 font=("Consolas", 10),
                 bg=self.card_color,
@@ -1877,10 +2240,12 @@ class MemoryGame:
                 fill="x",
                 pady=2
             )
+
 
 # Run Application
 
 if __name__ == "__main__":
+
     root = tk.Tk()
 
     game = MemoryGame(root)
